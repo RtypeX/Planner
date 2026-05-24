@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ExternalLink, RefreshCw, Truck } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
 import { CYCLE_STATUSES, PHONE_MODELS, DEFAULT_CARDCASH_RATE } from '../../lib/defaults'
 import { fmtCurrency, expectedPayout, plusDaysISO, todayISO, totalCost, netProfit } from '../../lib/calc'
 import { useAppData } from '../../lib/AppData'
+import { CARRIERS, detectCarrier, trackingUrl } from '../../lib/tracking'
 
 const empty = () => ({
   id: '',
@@ -20,11 +22,19 @@ const empty = () => ({
   actualPayout: '',
   notes: '',
   cardId: '',
+  trackingNumber: '',
+  carrier: '',
+  trackingStatus: '',
+  trackingCode: '',
+  trackingLastUpdated: '',
+  trackingRefreshedAt: '',
+  actualDelivery: '',
 })
 
 export default function CycleForm({ open, onClose, onSave, initial }) {
-  const { privacyCards } = useAppData()
+  const { privacyCards, settings, refreshTracking, showToast, cycles } = useAppData()
   const [form, setForm] = useState(empty())
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (open) setForm(initial ? { ...empty(), ...initial } : empty())
@@ -47,6 +57,49 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
     update({ orderDate: d, expectedDelivery: plusDaysISO(d, 2) })
   }
 
+  const onTrackingChange = (val) => {
+    const trimmed = (val || '').trim()
+    update({
+      trackingNumber: trimmed,
+      // Auto-fill carrier when user hasn't picked one yet
+      carrier: form.carrier || (trimmed ? detectCarrier(trimmed) : ''),
+    })
+  }
+
+  const handleRefresh = async () => {
+    if (!form.id) {
+      showToast({ type: 'info', message: 'Save the cycle first, then refresh tracking.' })
+      return
+    }
+    if (!form.trackingNumber) {
+      showToast({ type: 'info', message: 'Add a tracking number first.' })
+      return
+    }
+    if (!settings.trackingProxyUrl) {
+      showToast({
+        type: 'error',
+        title: 'Tracking API not configured',
+        message: 'Open Settings → Tracking API and paste your proxy URL.',
+      })
+      return
+    }
+    setRefreshing(true)
+    try {
+      const { cycle } = await refreshTracking(form.id)
+      // Sync the latest values into the open form
+      setForm((f) => ({ ...f, ...cycle }))
+      showToast({
+        type: 'success',
+        title: 'Tracking refreshed',
+        message: cycle.trackingStatus || 'Updated',
+      })
+    } catch (err) {
+      showToast({ type: 'error', title: 'Tracking failed', message: err.message })
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
   const calc = useMemo(() => ({
     expected: expectedPayout(form),
     cost: totalCost(form),
@@ -57,6 +110,8 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
     onSave(form)
     onClose()
   }
+
+  const externalUrl = trackingUrl(form.trackingNumber, form.carrier || detectCarrier(form.trackingNumber))
 
   return (
     <Modal
@@ -129,6 +184,75 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
             value={form.expectedDelivery}
             onChange={(e) => update({ expectedDelivery: e.target.value })}
           />
+        </div>
+
+        {/* Tracking section */}
+        <div className="sm:col-span-2 rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-slate-50 dark:bg-slate-900/60">
+          <div className="flex items-center gap-2 mb-3">
+            <Truck size={16} className="text-brand-600 dark:text-brand-400" />
+            <h4 className="font-semibold text-sm">Shipment tracking</h4>
+            {form.trackingStatus && (
+              <span className="badge bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 ml-auto">
+                {form.trackingStatus}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2">
+              <label className="label">Tracking number</label>
+              <input
+                className="input font-mono text-sm"
+                value={form.trackingNumber}
+                placeholder="1Z999AA10123456784"
+                onChange={(e) => onTrackingChange(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">Carrier</label>
+              <select
+                className="input"
+                value={form.carrier || ''}
+                onChange={(e) => update({ carrier: e.target.value })}
+              >
+                <option value="">{form.trackingNumber ? `auto (${detectCarrier(form.trackingNumber)})` : 'auto'}</option>
+                {CARRIERS.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Actual delivery</label>
+              <input
+                type="date"
+                className="input"
+                value={form.actualDelivery || ''}
+                onChange={(e) => update({ actualDelivery: e.target.value })}
+              />
+            </div>
+            <div className="sm:col-span-2 flex items-end gap-2">
+              <a
+                href={externalUrl || '#'}
+                target="_blank"
+                rel="noreferrer"
+                className={`btn-secondary flex-1 justify-center ${!externalUrl && 'pointer-events-none opacity-50'}`}
+              >
+                <ExternalLink size={15} /> Track on {form.carrier || 'UPS'}
+              </a>
+              <button
+                type="button"
+                className="btn-secondary flex-1 justify-center"
+                onClick={handleRefresh}
+                disabled={refreshing || !form.trackingNumber}
+                title={settings.trackingProxyUrl ? 'Fetch live status from your proxy' : 'Configure proxy URL in Settings to enable'}
+              >
+                <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+                {refreshing ? 'Refreshing…' : 'Refresh status'}
+              </button>
+            </div>
+          </div>
+          {form.trackingRefreshedAt && (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+              Last refreshed {new Date(form.trackingRefreshedAt).toLocaleString()}
+            </p>
+          )}
         </div>
 
         <div>

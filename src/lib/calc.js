@@ -131,6 +131,15 @@ export function buildNewCycle(model = 'iPhone 16e', qty = 1) {
     cardCashPaidDate: '',
     actualPayout: '',
     notes: '',
+    cardId: '',
+    // Shipment tracking (UPS / USPS / FedEx)
+    trackingNumber: '',
+    carrier: '',
+    trackingStatus: '',
+    trackingCode: '',
+    trackingLastUpdated: '', // ISO timestamp from carrier
+    trackingRefreshedAt: '', // ISO timestamp of our last fetch
+    actualDelivery: '',      // ISO date when carrier reported delivered
   }
 }
 
