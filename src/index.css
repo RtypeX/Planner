@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply font-sans bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  }
+  input, select, textarea, button {
+    font-family: inherit;
+  }
+  /* Number inputs: hide spinners */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type=number] { -moz-appearance: textfield; }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm;
+  }
+  .card-padded { @apply card p-4 sm:p-5; }
+
+  .input {
+    @apply w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent;
+  }
+  .label {
+    @apply block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 hover:bg-brand-700 text-white;
+  }
+  .btn-secondary {
+    @apply btn bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100;
+  }
+  .btn-ghost {
+    @apply btn text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800;
+  }
+  .btn-danger {
+    @apply btn bg-rose-600 hover:bg-rose-700 text-white;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+  .stat-label { @apply text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-medium; }
+  .stat-value { @apply text-2xl font-bold text-slate-900 dark:text-white tabular-nums; }
+  .table-wrap { @apply overflow-x-auto -mx-4 sm:mx-0; }
+  .table {
+    @apply min-w-full text-sm;
+  }
+  .table thead th {
+    @apply text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 px-3 py-2 border-b border-slate-200 dark:border-slate-800 whitespace-nowrap;
+  }
+  .table tbody td {
+    @apply px-3 py-2 border-b border-slate-100 dark:border-slate-800/60 whitespace-nowrap;
+  }
+  .table tbody tr:hover {
+    @apply bg-slate-50 dark:bg-slate-800/40;
+  }
+  .progress {
+    @apply h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden;
+  }
+  .progress-bar {
+    @apply h-full rounded-full transition-all;
+  }
+  .section-title {
+    @apply text-lg sm:text-xl font-bold text-slate-900 dark:text-white;
+  }
+  .section-sub {
+    @apply text-sm text-slate-500 dark:text-slate-400;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { @apply bg-slate-300 dark:bg-slate-700 rounded-full; }
+::-webkit-scrollbar-track { background: transparent; }
