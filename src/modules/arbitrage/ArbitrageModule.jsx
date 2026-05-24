@@ -1,15 +1,19 @@
 import { useState } from 'react'
-import { Plus, DollarSign, Wallet, Clock, TrendingUp, Trophy, Target, RefreshCw, Truck } from 'lucide-react'
+import {
+  Plus, DollarSign, Wallet, Clock, TrendingUp, Target,
+  RefreshCw, Truck, Sparkles, Zap,
+} from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Confirm from '../../components/ui/Confirm'
 import CycleForm from './CycleForm'
-import CycleTable from './CycleTable'
+import CycleList from './CycleTable'
 import PrivacyCards from './PrivacyCards'
 import Projector from './Projector'
 import { useAppData } from '../../lib/AppData'
 import { uid } from '../../lib/storage'
 import { PC_GOAL } from '../../lib/defaults'
+import { useCountUp } from '../../lib/animation'
 import {
   fmtCurrency,
   operatingCapital,
@@ -31,16 +35,20 @@ export default function ArbitrageModule() {
   const profit = totalAllTimeProfit(cycles)
   const completed = cyclesCompleted(cycles)
   const liquid = Number(balance.liquidCash || 0)
-
   const trackedCount = cycles.filter((c) => c.trackingNumber && c.status !== 'Paid').length
   const proxyConfigured = !!settings.trackingProxyUrl
+  const pcPct = Math.max(0, Math.min(100, (profit / PC_GOAL) * 100))
+  const pcRemaining = Math.max(0, PC_GOAL - profit)
+
+  // Animated counters
+  const profitAnim = useCountUp(Math.max(0, profit), { duration: 1100 })
+  const completedAnim = useCountUp(completed, { duration: 700 })
+  const trackedAnim = useCountUp(trackedCount, { duration: 600 })
+  const totalCyclesAnim = useCountUp(cycles.length, { duration: 600 })
 
   const saveCycle = (cycle) => {
-    if (cycle.id) {
-      setCycles((prev) => prev.map((c) => (c.id === cycle.id ? cycle : c)))
-    } else {
-      setCycles((prev) => [{ ...cycle, id: uid() }, ...prev])
-    }
+    if (cycle.id) setCycles((prev) => prev.map((c) => (c.id === cycle.id ? cycle : c)))
+    else setCycles((prev) => [{ ...cycle, id: uid() }, ...prev])
   }
   const deleteCycle = (cycle) => setCycles((prev) => prev.filter((c) => c.id !== cycle.id))
 
@@ -50,11 +58,19 @@ export default function ArbitrageModule() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex items-end justify-between gap-3 flex-wrap">
+    <div className="space-y-6 sm:space-y-8">
+      {/* ───────── Page header ───────── */}
+      <header className="flex items-end justify-between gap-3 flex-wrap animate-slide-down">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Arbitrage Tracker</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">iPhone flips · MobileX · CardCash payouts</p>
+          <div className="page-eyebrow">
+            <TrendingUp size={11} /> Arbitrage
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 text-slate-900 dark:text-white">
+            Cycle command
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+            iPhone flips · MobileX trade-in · CardCash payouts
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {trackedCount > 0 && (
@@ -62,9 +78,9 @@ export default function ArbitrageModule() {
               className="btn-secondary"
               onClick={handleRefreshAll}
               disabled={refreshingAll}
-              title={proxyConfigured ? `Refresh ${trackedCount} active shipments` : 'Configure proxy URL in Settings to enable'}
+              title={proxyConfigured ? `Refresh ${trackedCount} active shipments` : 'Configure proxy URL in Settings'}
             >
-              <RefreshCw size={16} className={refreshingAll ? 'animate-spin' : ''} />
+              <RefreshCw size={15} className={refreshingAll ? 'animate-spin' : ''} />
               {refreshingAll ? 'Refreshing…' : `Refresh tracking (${trackedCount})`}
             </button>
           )}
@@ -74,103 +90,140 @@ export default function ArbitrageModule() {
         </div>
       </header>
 
-      {/* Dashboard cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          label="Liquid cash"
-          value={fmtCurrency(liquid)}
-          icon={Wallet}
-          accent="brand"
-        >
+      {/* ───────── Hero + liquid cash ───────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 stagger">
+        {/* Hero PC goal */}
+        <div className="lg:col-span-2">
+          <div className="card-hero p-5 sm:p-7 h-full">
+            <div className="relative flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] uppercase tracking-wider font-bold text-white/70 flex items-center gap-2">
+                  <Sparkles size={11} className="animate-soft-pulse" /> PC Goal
+                </div>
+                <div className="text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tight mt-2">
+                  {fmtCurrency(profitAnim)}
+                  <span className="text-xl sm:text-2xl font-semibold text-white/60 ml-2">
+                    / {fmtCurrency(PC_GOAL)}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm text-white/80">
+                  {profit >= PC_GOAL
+                    ? '🎉 Goal reached — go build that PC.'
+                    : `${fmtCurrency(pcRemaining)} to go · ${pcPct.toFixed(0)}% there`}
+                </div>
+              </div>
+              <div className="icon-tile bg-white/15 ring-1 ring-white/20 backdrop-blur shrink-0">
+                <Target size={22} className="text-white" />
+              </div>
+            </div>
+            <div className="relative mt-5">
+              <ProgressBar
+                value={Math.max(0, profit)}
+                max={PC_GOAL}
+                color="white"
+                showPct={false}
+                size="lg"
+                onDark
+              />
+            </div>
+            <div className="relative mt-5 grid grid-cols-3 gap-3">
+              <HeroStatRow label="Cycles" value={completedAnim} accent="emerald" />
+              <HeroStatRow label="In transit" value={trackedAnim} accent="amber" pulse={trackedCount > 0} />
+              <HeroStatRow label="Tracked" value={totalCyclesAnim} accent="brand" />
+            </div>
+          </div>
+        </div>
+
+        {/* Liquid cash editable */}
+        <div className="card-padded card-hover">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="stat-label">Liquid cash</div>
+              <AnimatedCurrency value={liquid} className="stat-value mt-1.5" />
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Tap to update available capital
+              </div>
+            </div>
+            <div className="icon-tile bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-300 shrink-0">
+              <Wallet size={18} />
+            </div>
+          </div>
           <input
             type="number"
             step="0.01"
-            className="input mt-1 text-sm"
+            className="input mt-4 text-sm"
             value={liquid}
             onChange={(e) => setBalance({ ...balance, liquidCash: parseFloat(e.target.value || '0') })}
             aria-label="Liquid cash"
           />
-        </StatCard>
+        </div>
+      </div>
 
+      {/* Compact stats grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 stagger">
         <StatCard
+          variant="compact"
           label="Operating capital"
-          value={fmtCurrency(op)}
+          value={<AnimatedCurrency value={op} />}
           sub="Tied up in active cycles"
           icon={DollarSign}
           accent="amber"
         />
-
         <StatCard
+          variant="compact"
           label="Pending CardCash"
-          value={fmtCurrency(pending)}
+          value={<AnimatedCurrency value={pending} />}
           sub="Submitted, awaiting payout"
           icon={Clock}
           accent="violet"
         />
-
         <StatCard
+          variant="compact"
           label="Total profit"
-          value={fmtCurrency(profit)}
+          value={<AnimatedCurrency value={profit} />}
           sub="All-time, paid + projected"
           icon={TrendingUp}
           accent={profit >= 0 ? 'emerald' : 'rose'}
         />
-
-        <div className="card-padded col-span-2 lg:col-span-2">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="stat-label">PC goal</div>
-              <div className="stat-value">{fmtCurrency(Math.min(profit, PC_GOAL))} <span className="text-base font-medium text-slate-400">/ {fmtCurrency(PC_GOAL)}</span></div>
-            </div>
-            <div className="rounded-xl p-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
-              <Target size={20} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <ProgressBar value={Math.max(0, profit)} max={PC_GOAL} color="emerald" showPct={true} />
-          </div>
-        </div>
-
         <StatCard
-          label="Cycles completed"
-          value={completed}
-          sub={`${cycles.length} total tracked`}
-          icon={Trophy}
-          accent="emerald"
-        />
-
-        <StatCard
+          variant="compact"
           label="In transit"
-          value={trackedCount}
-          sub={proxyConfigured ? 'Live status enabled' : 'Add proxy URL in Settings'}
+          value={trackedAnim}
+          sub={proxyConfigured ? 'Live status enabled' : 'Add proxy in Settings'}
           icon={Truck}
           accent="brand"
         />
       </div>
 
-      {/* Cycle log */}
-      <section className="card-padded">
-        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+      {/* ───────── Cycle log ───────── */}
+      <section className="animate-slide-up">
+        <div className="flex items-end justify-between gap-3 flex-wrap mb-4">
           <div>
-            <h3 className="section-title">Cycle log</h3>
-            <p className="section-sub">Every order from purchase to payout.</p>
+            <div className="page-eyebrow">
+              <Zap size={11} /> Cycles
+            </div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">Cycle log</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Every order from purchase to payout.
+            </p>
           </div>
           <button className="btn-secondary" onClick={() => setEditing({})}>
-            <Plus size={16} /> Add
+            <Plus size={15} /> Add cycle
           </button>
         </div>
-        <CycleTable
+        <CycleList
           cycles={cycles}
           privacyCards={privacyCards}
           onEdit={(c) => setEditing(c)}
           onDelete={(c) => setConfirmDelete(c)}
+          onNew={() => setEditing({})}
         />
       </section>
 
-      {/* Privacy cards */}
+      {/* ───────── Privacy cards ───────── */}
       <PrivacyCards />
 
-      {/* Projector */}
+      {/* ───────── Projector ───────── */}
       <Projector />
 
       <CycleForm
@@ -190,4 +243,31 @@ export default function ArbitrageModule() {
       />
     </div>
   )
+}
+
+function HeroStatRow({ label, value, accent, pulse = false }) {
+  const dots = {
+    emerald: 'bg-emerald-300',
+    amber:   'bg-amber-300',
+    brand:   'bg-sky-300',
+  }
+  return (
+    <div className="rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur p-3">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
+        <span className="relative inline-flex">
+          <span className={`w-1.5 h-1.5 rounded-full ${dots[accent] || dots.brand}`} />
+          {pulse && (
+            <span className={`absolute inset-0 w-1.5 h-1.5 rounded-full ${dots[accent] || dots.brand} animate-ping-slow`} />
+          )}
+        </span>
+        {label}
+      </div>
+      <div className="text-2xl font-extrabold tabular-nums mt-1">{value}</div>
+    </div>
+  )
+}
+
+function AnimatedCurrency({ value, className = '' }) {
+  const v = useCountUp(value || 0, { duration: 800 })
+  return <span className={className}>{fmtCurrency(v)}</span>
 }

@@ -22,10 +22,14 @@ function Shell() {
   return (
     <>
       <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-        {activeTab === 'arbitrage' && <ArbitrageModule />}
-        {activeTab === 'fitness' && <FitnessModule />}
-        {activeTab === 'timeline' && <TimelineModule />}
-        {activeTab === 'finance' && <FinanceModule />}
+        {/* `key` makes React unmount + mount on tab change, replaying the
+            module's stagger entrance animation. Feels like real navigation. */}
+        <div key={activeTab} className="animate-fade-in">
+          {activeTab === 'arbitrage' && <ArbitrageModule />}
+          {activeTab === 'fitness' && <FitnessModule />}
+          {activeTab === 'timeline' && <TimelineModule />}
+          {activeTab === 'finance' && <FinanceModule />}
+        </div>
       </Layout>
       <Toast toast={toast} onClose={() => showToast(null)} />
     </>
