@@ -60,6 +60,13 @@ export default function Timeline() {
     [milestones],
   )
 
+  // Listen for command-palette "New milestone" actions
+  useEffect(() => {
+    const onNew = () => setEditing(empty())
+    window.addEventListener('hq:new-milestone', onNew)
+    return () => window.removeEventListener('hq:new-milestone', onNew)
+  }, [])
+
   const save = (m) => {
     if (m.id) setMilestones((prev) => prev.map((x) => (x.id === m.id ? m : x)))
     else setMilestones((prev) => [...prev, { ...m, id: uid() }])

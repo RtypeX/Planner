@@ -1,16 +1,27 @@
 import { useState } from 'react'
-import { TrendingUp, Dumbbell, Map, Wallet, Settings as SettingsIcon, Menu, X } from 'lucide-react'
+import {
+  Home, TrendingUp, Dumbbell, Map, Wallet,
+  Settings as SettingsIcon, Menu, X,
+} from 'lucide-react'
 import SettingsPanel from './SettingsPanel'
 
 const NAV = [
+  { id: 'home',      label: 'Home',      icon: Home },
   { id: 'arbitrage', label: 'Arbitrage', icon: TrendingUp },
   { id: 'fitness',   label: 'Fitness',   icon: Dumbbell },
   { id: 'timeline',  label: 'Timeline',  icon: Map },
   { id: 'finance',   label: 'Finance',   icon: Wallet },
 ]
 
-export default function Layout({ activeTab, setActiveTab, children }) {
-  const [settingsOpen, setSettingsOpen] = useState(false)
+export default function Layout({
+  activeTab, setActiveTab, children,
+  // App.jsx owns settings-open state so the command palette can toggle it.
+  settingsOpen: ctlSettingsOpen,
+  setSettingsOpen: ctlSetSettingsOpen,
+}) {
+  const [internalSettingsOpen, setInternalSettingsOpen] = useState(false)
+  const settingsOpen = ctlSettingsOpen ?? internalSettingsOpen
+  const setSettingsOpen = ctlSetSettingsOpen ?? setInternalSettingsOpen
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const activeItem = NAV.find((n) => n.id === activeTab) || NAV[0]
 
@@ -30,7 +41,8 @@ export default function Layout({ activeTab, setActiveTab, children }) {
             />
           ))}
         </nav>
-        <div className="p-3 border-t border-slate-200/70 dark:border-white/[0.05]">
+        <div className="p-3 border-t border-slate-200/70 dark:border-white/[0.05] space-y-1">
+          <KbdHint />
           <button
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
                        text-slate-600 dark:text-slate-300
@@ -113,7 +125,7 @@ export default function Layout({ activeTab, setActiveTab, children }) {
                       bg-white/90 dark:bg-slate-950/80 backdrop-blur-xl
                       border-t border-slate-200/70 dark:border-white/[0.05]
                       pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-4 h-16">
+        <div className="grid grid-cols-5 h-16">
           {NAV.map((item) => {
             const Icon = item.icon
             const active = activeTab === item.id
@@ -127,7 +139,7 @@ export default function Layout({ activeTab, setActiveTab, children }) {
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-b-full bg-brand-500" />
                 )}
                 <Icon
-                  size={20}
+                  size={19}
                   className={active ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'}
                   strokeWidth={active ? 2.4 : 2}
                 />
@@ -141,6 +153,21 @@ export default function Layout({ activeTab, setActiveTab, children }) {
       </nav>
 
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </div>
+  )
+}
+
+function KbdHint() {
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || '')
+  return (
+    <div className="px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/[0.05]
+                    flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+      <span>Quick actions</span>
+      <kbd className="font-mono font-semibold tracking-wider text-slate-700 dark:text-slate-200
+                      bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08]
+                      px-1.5 py-0.5 rounded">
+        {isMac ? '⌘K' : 'Ctrl K'}
+      </kbd>
     </div>
   )
 }

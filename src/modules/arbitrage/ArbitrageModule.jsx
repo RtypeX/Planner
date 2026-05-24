@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Plus, DollarSign, Wallet, Clock, TrendingUp, Target,
   RefreshCw, Truck, Sparkles, Zap,
@@ -93,6 +93,13 @@ export default function ArbitrageModule() {
     setRefreshingAll(true)
     try { await refreshAllTracking() } finally { setRefreshingAll(false) }
   }
+
+  // Listen for command-palette "New cycle" actions
+  useEffect(() => {
+    const onNew = () => setEditing({})
+    window.addEventListener('hq:new-cycle', onNew)
+    return () => window.removeEventListener('hq:new-cycle', onNew)
+  }, [])
 
   return (
     <div className="space-y-6 sm:space-y-8">
