@@ -7,11 +7,27 @@ import {
   defaultMilestones,
   defaultAsvab,
   defaultSettings,
+  defaultPhoneModels,
 } from './defaults'
 import { fetchTracking, detectCarrier } from './tracking'
-import { todayISO } from './calc'
 
 const AppDataContext = createContext(null)
+
+/** Migrate the legacy object-form phoneModels to the new array form. */
+function migratePhoneModels(stored) {
+  if (Array.isArray(stored) && stored.length) return stored
+  if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+    const out = Object.entries(stored).map(([name, m], i) => ({
+      id: `pm-${i}-${Math.random().toString(36).slice(2, 6)}`,
+      name,
+      cost: Number(m?.cost || 0),
+      mobileX: Number(m?.mobileX || 0),
+      tradeIn: Number(m?.tradeIn || 0),
+    }))
+    return out.length ? out : defaultPhoneModels()
+  }
+  return defaultPhoneModels()
+}
 
 export function AppDataProvider({ children }) {
   const [cycles, setCycles] = useLocalStorage(STORAGE_KEYS.cycles, [])
@@ -26,6 +42,8 @@ export function AppDataProvider({ children }) {
   const [asvab, setAsvab] = useLocalStorage(STORAGE_KEYS.asvab, defaultAsvab())
   const [goals, setGoals] = useLocalStorage(STORAGE_KEYS.goals, defaultGoals())
   const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.settings, defaultSettings())
+  const [phoneModelsRaw, setPhoneModels] = useLocalStorage(STORAGE_KEYS.phoneModels, defaultPhoneModels())
+  const phoneModels = useMemo(() => migratePhoneModels(phoneModelsRaw), [phoneModelsRaw])
 
   // Toast queue (single-slot for now; new toast replaces the old)
   const [toast, setToast] = useState(null)
@@ -58,7 +76,6 @@ export function AppDataProvider({ children }) {
           ? data.deliveredAt.slice(0, 10)
           : cycle.actualDelivery || '',
       }
-      // If the package is in transit and the cycle is still 'Ordered', auto-bump to 'Shipped'
       const code = (data.code || '').toUpperCase()
       const inTransit = code === 'I' || code === 'IT' || code === 'O' || code === 'P' ||
         /in transit|out for delivery|picked up/i.test(data.status || '')
@@ -74,7 +91,7 @@ export function AppDataProvider({ children }) {
     [cycles, setCycles, settings.trackingProxyUrl],
   )
 
-  // Refresh every cycle that has a tracking number, sequentially (avoid rate limits)
+  // Refresh every cycle that has a tracking number, sequentially
   const refreshAllTracking = useCallback(async () => {
     const targets = cycles.filter((c) => c.trackingNumber && c.status !== 'Paid')
     if (targets.length === 0) {
@@ -135,6 +152,7 @@ export function AppDataProvider({ children }) {
     setAsvab(defaultAsvab())
     setGoals(defaultGoals())
     setSettings(defaultSettings())
+    setPhoneModels(defaultPhoneModels())
   }
 
   const value = useMemo(
@@ -148,6 +166,7 @@ export function AppDataProvider({ children }) {
       asvab, setAsvab,
       goals, setGoals,
       settings, setSettings,
+      phoneModels, setPhoneModels,
       resetAll,
       // tracking
       refreshTracking,
@@ -157,7 +176,7 @@ export function AppDataProvider({ children }) {
     }),
     [
       cycles, privacyCards, balance, workouts, fitnessBaselines, milestones,
-      asvab, goals, settings, refreshTracking, refreshAllTracking, toast, showToast,
+      asvab, goals, settings, phoneModels, refreshTracking, refreshAllTracking, toast, showToast,
     ],
   )
 

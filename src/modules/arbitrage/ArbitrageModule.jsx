@@ -52,6 +52,43 @@ export default function ArbitrageModule() {
   }
   const deleteCycle = (cycle) => setCycles((prev) => prev.filter((c) => c.id !== cycle.id))
 
+  /**
+   * Duplicate a cycle: copy item / cost / payout settings into a fresh draft,
+   * but reset dates, status, tracking, and CardCash submission so the user
+   * has a clean slate for a new order.
+   */
+  const duplicateCycle = (cycle) => {
+    const today = (new Date()).toISOString().slice(0, 10)
+    const todayPlus2 = new Date(); todayPlus2.setDate(todayPlus2.getDate() + 2)
+    setEditing({
+      // copy form-relevant fields
+      model: cycle.model,
+      quantity: cycle.quantity,
+      costPerUnit: cycle.costPerUnit,
+      mobileXCost: cycle.mobileXCost,
+      tradeInValue: cycle.tradeInValue,
+      cardCashRate: cycle.cardCashRate,
+      cardId: cycle.cardId || '',
+      // reset everything date/status/tracking related
+      orderDate: today,
+      expectedDelivery: todayPlus2.toISOString().slice(0, 10),
+      status: 'Ordered',
+      cardCashSubmittedDate: '',
+      cardCashPaidDate: '',
+      actualPayout: '',
+      actualDelivery: '',
+      trackingNumber: '',
+      carrier: '',
+      trackingStatus: '',
+      trackingCode: '',
+      trackingLastUpdated: '',
+      trackingRefreshedAt: '',
+      // notes carry over with a marker
+      notes: cycle.notes ? `(Duplicated) ${cycle.notes}` : '',
+      // no id — saving creates a new cycle
+    })
+  }
+
   const handleRefreshAll = async () => {
     setRefreshingAll(true)
     try { await refreshAllTracking() } finally { setRefreshingAll(false) }
@@ -216,6 +253,7 @@ export default function ArbitrageModule() {
           privacyCards={privacyCards}
           onEdit={(c) => setEditing(c)}
           onDelete={(c) => setConfirmDelete(c)}
+          onDuplicate={duplicateCycle}
           onNew={() => setEditing({})}
         />
       </section>

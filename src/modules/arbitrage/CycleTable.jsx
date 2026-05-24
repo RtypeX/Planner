@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Pencil, Trash2, ExternalLink, RefreshCw, Truck, Smartphone,
-  ArrowRight, CalendarClock, Plus, Package,
+  ArrowRight, CalendarClock, Plus, Package, Search, X, Copy,
 } from 'lucide-react'
 import EmptyState from '../../components/ui/EmptyState'
 import { fmtCurrency, fmtDateShort, expectedPayout, netProfit, totalCost } from '../../lib/calc'
+import { CYCLE_STATUSES } from '../../lib/defaults'
 import { detectCarrier, trackingUrl, statusTone, shortStatus } from '../../lib/tracking'
 import { useAppData } from '../../lib/AppData'
 
@@ -24,7 +25,30 @@ const TONE_STYLES = {
   slate:   'bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300 ring-1 ring-slate-200/70 dark:ring-white/10',
 }
 
-export default function CycleList({ cycles, onEdit, onDelete, onNew, privacyCards }) {
+export default function CycleList({ cycles, onEdit, onDelete, onNew, onDuplicate, privacyCards }) {
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [search, setSearch] = useState('')
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return cycles.filter((c) => {
+      if (statusFilter !== 'all' && c.status !== statusFilter) return false
+      if (!q) return true
+      const haystack = [c.model, c.trackingNumber, c.carrier, c.notes]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(q)
+    })
+  }, [cycles, statusFilter, search])
+
+  const byStatus = useMemo(() => {
+    const counts = { all: cycles.length }
+    CYCLE_STATUSES.forEach((s) => { counts[s] = 0 })
+    cycles.forEach((c) => { counts[c.status] = (counts[c.status] || 0) + 1 })
+    return counts
+  }, [cycles])
+
   if (cycles.length === 0) {
     return (
       <div className="card">
@@ -41,23 +65,105 @@ export default function CycleList({ cycles, onEdit, onDelete, onNew, privacyCard
       </div>
     )
   }
+
   const cardsById = Object.fromEntries(privacyCards.map((c) => [c.id, c]))
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 stagger">
-      {cycles.map((c) => (
-        <CycleCard
-          key={c.id}
-          cycle={c}
-          card={c.cardId ? cardsById[c.cardId] : null}
-          onEdit={() => onEdit(c)}
-          onDelete={() => onDelete(c)}
-        />
-      ))}
-    </div>
+    <>
+      {/* Toolbar: search + status filter chips */}
+      <div className="card-padded mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[180px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              className="input pl-9 pr-9 text-sm"
+              placeholder="Search by model, tracking number, notes…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                className="absolute right-2 top-1/2 -translate-y-1/2 btn-ghost !p-1"
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap mt-3">
+          <FilterChip
+            label={`All`}
+            count={byStatus.all}
+            active={statusFilter === 'all'}
+            onClick={() => setStatusFilter('all')}
+          />
+          {CYCLE_STATUSES.map((s) => (
+            <FilterChip
+              key={s}
+              label={s}
+              count={byStatus[s] || 0}
+              active={statusFilter === s}
+              onClick={() => setStatusFilter(s)}
+              tone={s}
+            />
+          ))}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            icon={Search}
+            title="No matches"
+            description="Try a different search term or status filter."
+            action={
+              <button className="btn-secondary" onClick={() => { setSearch(''); setStatusFilter('all') }}>
+                Clear filters
+              </button>
+            }
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 stagger">
+          {filtered.map((c) => (
+            <CycleCard
+              key={c.id}
+              cycle={c}
+              card={c.cardId ? cardsById[c.cardId] : null}
+              onEdit={() => onEdit(c)}
+              onDelete={() => onDelete(c)}
+              onDuplicate={() => onDuplicate?.(c)}
+            />
+          ))}
+        </div>
+      )}
+    </>
   )
 }
 
-function CycleCard({ cycle, card, onEdit, onDelete }) {
+function FilterChip({ label, count, active, onClick, tone }) {
+  const toneCls = !active && tone ? STATUS_STYLES[tone]?.pill : ''
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition
+        ${active
+          ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-soft'
+          : `${toneCls || 'bg-slate-100 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300'} hover:opacity-80`
+        }`}
+    >
+      {label}
+      <span className={`tabular-nums px-1.5 rounded-full text-[10px] ${active ? 'bg-white/20' : 'bg-white/60 dark:bg-white/[0.08]'}`}>
+        {count}
+      </span>
+    </button>
+  )
+}
+
+function CycleCard({ cycle, card, onEdit, onDelete, onDuplicate }) {
   const cost = totalCost(cycle)
   const expected = expectedPayout(cycle)
   const net = netProfit(cycle)
@@ -115,7 +221,11 @@ function CycleCard({ cycle, card, onEdit, onDelete }) {
           <span>
             Trade {fmtCurrency(cycle.tradeInValue)} · CC {(Number(cycle.cardCashRate) * 100).toFixed(0)}%
           </span>
-          {card && <span className="truncate ml-2">💳 {card.nickname}</span>}
+          {card && (
+            <span className="truncate ml-2">
+              💳 {card.nickname}{card.last4 ? ` ····${card.last4}` : ''}
+            </span>
+          )}
         </div>
 
         {/* tracking */}
@@ -127,6 +237,11 @@ function CycleCard({ cycle, card, onEdit, onDelete }) {
             {cycle.notes ? '📝 Has notes' : ' '}
           </span>
           <div className="flex items-center gap-1">
+            {onDuplicate && (
+              <button className="btn-ghost !p-1.5" onClick={onDuplicate} aria-label="Duplicate cycle" title="Duplicate">
+                <Copy size={14} />
+              </button>
+            )}
             <button className="btn-ghost !p-1.5" onClick={onEdit} aria-label="Edit cycle">
               <Pencil size={14} />
             </button>

@@ -1,5 +1,5 @@
 import { addDays, format, parseISO, isValid } from 'date-fns'
-import { PHONE_MODELS, DEFAULT_CARDCASH_RATE, PRIVACY_USES_PER_CARD } from './defaults'
+import { PHONE_MODELS, DEFAULT_CARDCASH_RATE, PRIVACY_USES_PER_CARD, defaultPhoneModels, findModel } from './defaults'
 
 export function fmtCurrency(n) {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '$0'
@@ -86,7 +86,6 @@ export function netProfit(cycle) {
 }
 
 export function isPending(cycle) {
-  // Operating capital = money out the door, not yet paid back
   return cycle.status !== 'Paid'
 }
 
@@ -95,7 +94,6 @@ export function operatingCapital(cycles) {
 }
 
 export function pendingCardCash(cycles) {
-  // Money submitted but not yet paid out
   return cycles
     .filter((c) => c.status === 'Submitted' || c.status === 'Traded' || c.status === 'Shipped')
     .reduce((sum, c) => sum + expectedPayout(c), 0)
@@ -113,18 +111,20 @@ export function cyclesCompleted(cycles) {
   return cycles.filter((c) => c.status === 'Paid').length
 }
 
-export function buildNewCycle(model = 'iPhone 16e', qty = 1) {
-  const m = PHONE_MODELS[model] || PHONE_MODELS['iPhone 16e']
+/** Build a fresh cycle, optionally seeded from a chosen phone-model record. */
+export function buildNewCycle(model = 'iPhone 16e', qty = 1, models) {
+  const fallback = PHONE_MODELS[model] || PHONE_MODELS['iPhone 16e']
+  const m = models ? findModel(models, model) : null
   const orderDate = todayISO()
   return {
     id: '',
-    model,
+    model: m?.name || model,
     quantity: qty,
-    costPerUnit: m.cost,
-    mobileXCost: m.mobileX,
+    costPerUnit: m?.cost ?? fallback.cost,
+    mobileXCost: m?.mobileX ?? fallback.mobileX,
     orderDate,
     expectedDelivery: plusDaysISO(orderDate, 2),
-    tradeInValue: m.tradeIn,
+    tradeInValue: m?.tradeIn ?? fallback.tradeIn,
     cardCashRate: DEFAULT_CARDCASH_RATE,
     status: 'Ordered',
     cardCashSubmittedDate: '',
@@ -132,14 +132,13 @@ export function buildNewCycle(model = 'iPhone 16e', qty = 1) {
     actualPayout: '',
     notes: '',
     cardId: '',
-    // Shipment tracking (UPS / USPS / FedEx)
     trackingNumber: '',
     carrier: '',
     trackingStatus: '',
     trackingCode: '',
-    trackingLastUpdated: '', // ISO timestamp from carrier
-    trackingRefreshedAt: '', // ISO timestamp of our last fetch
-    actualDelivery: '',      // ISO date when carrier reported delivered
+    trackingLastUpdated: '',
+    trackingRefreshedAt: '',
+    actualDelivery: '',
   }
 }
 
@@ -165,14 +164,19 @@ export function cardsUsedThisMonth(cycles) {
 
 // ---- Projector ----
 
-export function projectCycles(startingCash, phonesPerCycle, model, cardCashRate, count = 5) {
-  const m = PHONE_MODELS[model] || PHONE_MODELS['iPhone 16e']
-  const costPer = m.cost + m.mobileX
-  const profitPer = m.tradeIn * cardCashRate - costPer
+/**
+ * Forecast `count` cycles given a starting cash, phones-per-cycle, model name,
+ * card-cash rate, and an optional dynamic models[] (defaults to PHONE_MODELS).
+ */
+export function projectCycles(startingCash, phonesPerCycle, model, cardCashRate, count = 5, models) {
+  const list = Array.isArray(models) && models.length ? models : defaultPhoneModels()
+  const m = findModel(list, model)
+  const costPer = (m?.cost ?? 0) + (m?.mobileX ?? 0)
+  const profitPer = (m?.tradeIn ?? 0) * cardCashRate - costPer
   let cash = Number(startingCash) || 0
   const rows = []
   for (let i = 1; i <= count; i++) {
-    const phones = Math.min(phonesPerCycle, Math.floor(cash / costPer))
+    const phones = costPer > 0 ? Math.min(phonesPerCycle, Math.floor(cash / costPer)) : phonesPerCycle
     const deployed = phones * costPer
     const expectedProfit = phones * profitPer
     const ending = cash - deployed + (deployed + expectedProfit) // capital returns + profit

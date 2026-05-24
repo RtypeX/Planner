@@ -1,5 +1,9 @@
 // Default constants and seed data for Dylan's HQ
 
+// Phone models — kept as a constant for the *seed* shape. Once the app loads,
+// models live in localStorage as an array under `dylan_phone_models` and the
+// user can add / edit / delete them in Settings. This object is just the
+// initial default and a fallback if storage is empty/corrupt.
 export const PHONE_MODELS = {
   'iPhone 16e': {
     label: 'iPhone 16e',
@@ -15,6 +19,20 @@ export const PHONE_MODELS = {
   },
 }
 
+/** Default phone models in array form (the storage shape). */
+export function defaultPhoneModels() {
+  return [
+    { id: 'pm-16e', name: 'iPhone 16e', cost: 171, mobileX: 8, tradeIn: 310 },
+    { id: 'pm-13',  name: 'iPhone 13',  cost: 116, mobileX: 8, tradeIn: 195 },
+  ]
+}
+
+/** Look up a phone model by name in the array form, with a graceful fallback. */
+export function findModel(models, name) {
+  const list = Array.isArray(models) && models.length ? models : defaultPhoneModels()
+  return list.find((m) => m.name === name) || list[0]
+}
+
 export const DEFAULT_CARDCASH_RATE = 0.77
 export const PC_GOAL = 799
 export const PRE_ENLIST_GOAL = 2500
@@ -26,6 +44,18 @@ export const CARD_STATUSES = ['Active', 'Maxed', 'Burned']
 export const MILESTONE_CATEGORIES = ['Arbitrage', 'Fitness', 'Military', 'Life']
 export const MILESTONE_STATUSES = ['Not started', 'In progress', 'Done']
 export const WORKOUT_TYPES = ['Run', 'Push-ups', 'Sit-ups', 'Mixed']
+
+// Privacy card cosmetics + brand options
+export const CARD_TYPES = ['Visa', 'Mastercard', 'Amex', 'Discover', 'Other']
+
+export const CARD_COLORS = [
+  { id: 'violet',  label: 'Violet',  gradient: 'from-violet-500 via-purple-600 to-indigo-700' },
+  { id: 'brand',   label: 'Blue',    gradient: 'from-brand-500 via-brand-600 to-indigo-700' },
+  { id: 'emerald', label: 'Emerald', gradient: 'from-emerald-500 via-teal-600 to-cyan-700' },
+  { id: 'rose',    label: 'Rose',    gradient: 'from-rose-500 via-pink-600 to-purple-700' },
+  { id: 'amber',   label: 'Amber',   gradient: 'from-amber-500 via-orange-600 to-rose-700' },
+  { id: 'slate',   label: 'Slate',   gradient: 'from-slate-700 via-slate-800 to-slate-900' },
+]
 
 export const BMT_TARGETS = {
   runSeconds: 13 * 60 + 36, // 13:36

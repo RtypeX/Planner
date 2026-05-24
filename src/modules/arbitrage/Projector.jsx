@@ -1,25 +1,32 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Calculator, Target, Zap } from 'lucide-react'
 import SectionHeader from '../../components/ui/SectionHeader'
 import { fmtCurrency, projectCycles, operatingCapital } from '../../lib/calc'
 import { useAppData } from '../../lib/AppData'
-import { DEFAULT_CARDCASH_RATE, PC_GOAL, PHONE_MODELS } from '../../lib/defaults'
+import { DEFAULT_CARDCASH_RATE, PC_GOAL, findModel } from '../../lib/defaults'
 
 export default function Projector() {
-  const { balance, cycles } = useAppData()
+  const { balance, cycles, phoneModels } = useAppData()
   const liveCash = Number(balance.liquidCash || 0)
   const op = operatingCapital(cycles)
 
   const [override, setOverride] = useState('')
   const [phonesPerCycle, setPhonesPerCycle] = useState(2)
-  const [model, setModel] = useState('iPhone 16e')
+  const [model, setModel] = useState(phoneModels[0]?.name || 'iPhone 16e')
   const [rate, setRate] = useState(DEFAULT_CARDCASH_RATE)
+
+  // Keep selected model valid if user deletes/renames in Settings.
+  useEffect(() => {
+    if (!phoneModels.some((m) => m.name === model)) {
+      setModel(phoneModels[0]?.name || '')
+    }
+  }, [phoneModels, model])
 
   const startingCash = override === '' ? liveCash : Number(override) || 0
 
   const rows = useMemo(
-    () => projectCycles(startingCash, phonesPerCycle, model, rate, 5),
-    [startingCash, phonesPerCycle, model, rate],
+    () => projectCycles(startingCash, phonesPerCycle, model, rate, 5, phoneModels),
+    [startingCash, phonesPerCycle, model, rate, phoneModels],
   )
 
   const cumProfit = useMemo(() => {
@@ -30,8 +37,8 @@ export default function Projector() {
     })
   }, [rows])
 
-  const m = PHONE_MODELS[model]
-  const profitPer = m.tradeIn * rate - (m.cost + m.mobileX)
+  const m = findModel(phoneModels, model)
+  const profitPer = (m?.tradeIn ?? 0) * rate - ((m?.cost ?? 0) + (m?.mobileX ?? 0))
   const profitPerCycle = phonesPerCycle * profitPer
   const cyclesToPC = profitPerCycle > 0 ? Math.ceil(PC_GOAL / profitPerCycle) : '∞'
 
@@ -86,7 +93,7 @@ export default function Projector() {
           <div>
             <label className="label">Phone model</label>
             <select className="input" value={model} onChange={(e) => setModel(e.target.value)}>
-              {Object.keys(PHONE_MODELS).map((k) => <option key={k} value={k}>{k}</option>)}
+              {phoneModels.map((pm) => <option key={pm.id} value={pm.name}>{pm.name}</option>)}
             </select>
           </div>
 
