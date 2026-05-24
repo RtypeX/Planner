@@ -163,7 +163,10 @@ function BrandMark() {
                     flex items-center justify-center text-white font-extrabold shadow-glow-brand
                     ring-1 ring-white/20">
       <span className="text-base">D</span>
-      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-white dark:ring-slate-950" />
+      <span className="absolute -top-0.5 -right-0.5 inline-flex">
+        <span className="w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-white dark:ring-slate-950 relative z-10" />
+        <span className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping-slow" />
+      </span>
     </div>
   )
 }

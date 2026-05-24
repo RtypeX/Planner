@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  Plus, DollarSign, Wallet, Clock, TrendingUp, Trophy, Target,
+  Plus, DollarSign, Wallet, Clock, TrendingUp, Target,
   RefreshCw, Truck, Sparkles, Zap,
 } from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
@@ -13,6 +13,7 @@ import Projector from './Projector'
 import { useAppData } from '../../lib/AppData'
 import { uid } from '../../lib/storage'
 import { PC_GOAL } from '../../lib/defaults'
+import { useCountUp } from '../../lib/animation'
 import {
   fmtCurrency,
   operatingCapital,
@@ -39,6 +40,12 @@ export default function ArbitrageModule() {
   const pcPct = Math.max(0, Math.min(100, (profit / PC_GOAL) * 100))
   const pcRemaining = Math.max(0, PC_GOAL - profit)
 
+  // Animated counters
+  const profitAnim = useCountUp(Math.max(0, profit), { duration: 1100 })
+  const completedAnim = useCountUp(completed, { duration: 700 })
+  const trackedAnim = useCountUp(trackedCount, { duration: 600 })
+  const totalCyclesAnim = useCountUp(cycles.length, { duration: 600 })
+
   const saveCycle = (cycle) => {
     if (cycle.id) setCycles((prev) => prev.map((c) => (c.id === cycle.id ? cycle : c)))
     else setCycles((prev) => [{ ...cycle, id: uid() }, ...prev])
@@ -51,9 +58,9 @@ export default function ArbitrageModule() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8">
       {/* ───────── Page header ───────── */}
-      <header className="flex items-end justify-between gap-3 flex-wrap">
+      <header className="flex items-end justify-between gap-3 flex-wrap animate-slide-down">
         <div>
           <div className="page-eyebrow">
             <TrendingUp size={11} /> Arbitrage
@@ -83,18 +90,18 @@ export default function ArbitrageModule() {
         </div>
       </header>
 
-      {/* ───────── Hero + stats ───────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* ───────── Hero + liquid cash ───────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 stagger">
         {/* Hero PC goal */}
         <div className="lg:col-span-2">
           <div className="card-hero p-5 sm:p-7 h-full">
             <div className="relative flex items-start justify-between gap-3">
               <div>
                 <div className="text-[11px] uppercase tracking-wider font-bold text-white/70 flex items-center gap-2">
-                  <Sparkles size={11} /> PC Goal
+                  <Sparkles size={11} className="animate-soft-pulse" /> PC Goal
                 </div>
                 <div className="text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tight mt-2">
-                  {fmtCurrency(Math.max(0, profit))}
+                  {fmtCurrency(profitAnim)}
                   <span className="text-xl sm:text-2xl font-semibold text-white/60 ml-2">
                     / {fmtCurrency(PC_GOAL)}
                   </span>
@@ -120,9 +127,9 @@ export default function ArbitrageModule() {
               />
             </div>
             <div className="relative mt-5 grid grid-cols-3 gap-3">
-              <HeroStatRow label="Cycles" value={completed} accent="emerald" />
-              <HeroStatRow label="In transit" value={trackedCount} accent="amber" />
-              <HeroStatRow label="Tracked" value={cycles.length} accent="brand" />
+              <HeroStatRow label="Cycles" value={completedAnim} accent="emerald" />
+              <HeroStatRow label="In transit" value={trackedAnim} accent="amber" pulse={trackedCount > 0} />
+              <HeroStatRow label="Tracked" value={totalCyclesAnim} accent="brand" />
             </div>
           </div>
         </div>
@@ -132,7 +139,7 @@ export default function ArbitrageModule() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="stat-label">Liquid cash</div>
-              <div className="stat-value mt-1.5">{fmtCurrency(liquid)}</div>
+              <AnimatedCurrency value={liquid} className="stat-value mt-1.5" />
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Tap to update available capital
               </div>
@@ -153,11 +160,11 @@ export default function ArbitrageModule() {
       </div>
 
       {/* Compact stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 stagger">
         <StatCard
           variant="compact"
           label="Operating capital"
-          value={fmtCurrency(op)}
+          value={<AnimatedCurrency value={op} />}
           sub="Tied up in active cycles"
           icon={DollarSign}
           accent="amber"
@@ -165,7 +172,7 @@ export default function ArbitrageModule() {
         <StatCard
           variant="compact"
           label="Pending CardCash"
-          value={fmtCurrency(pending)}
+          value={<AnimatedCurrency value={pending} />}
           sub="Submitted, awaiting payout"
           icon={Clock}
           accent="violet"
@@ -173,7 +180,7 @@ export default function ArbitrageModule() {
         <StatCard
           variant="compact"
           label="Total profit"
-          value={fmtCurrency(profit)}
+          value={<AnimatedCurrency value={profit} />}
           sub="All-time, paid + projected"
           icon={TrendingUp}
           accent={profit >= 0 ? 'emerald' : 'rose'}
@@ -181,7 +188,7 @@ export default function ArbitrageModule() {
         <StatCard
           variant="compact"
           label="In transit"
-          value={trackedCount}
+          value={trackedAnim}
           sub={proxyConfigured ? 'Live status enabled' : 'Add proxy in Settings'}
           icon={Truck}
           accent="brand"
@@ -189,7 +196,7 @@ export default function ArbitrageModule() {
       </div>
 
       {/* ───────── Cycle log ───────── */}
-      <section>
+      <section className="animate-slide-up">
         <div className="flex items-end justify-between gap-3 flex-wrap mb-4">
           <div>
             <div className="page-eyebrow">
@@ -238,19 +245,29 @@ export default function ArbitrageModule() {
   )
 }
 
-function HeroStatRow({ label, value, accent }) {
+function HeroStatRow({ label, value, accent, pulse = false }) {
   const dots = {
     emerald: 'bg-emerald-300',
-    amber: 'bg-amber-300',
-    brand: 'bg-sky-300',
+    amber:   'bg-amber-300',
+    brand:   'bg-sky-300',
   }
   return (
     <div className="rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur p-3">
       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
-        <span className={`w-1.5 h-1.5 rounded-full ${dots[accent] || dots.brand}`} />
+        <span className="relative inline-flex">
+          <span className={`w-1.5 h-1.5 rounded-full ${dots[accent] || dots.brand}`} />
+          {pulse && (
+            <span className={`absolute inset-0 w-1.5 h-1.5 rounded-full ${dots[accent] || dots.brand} animate-ping-slow`} />
+          )}
+        </span>
         {label}
       </div>
       <div className="text-2xl font-extrabold tabular-nums mt-1">{value}</div>
     </div>
   )
+}
+
+function AnimatedCurrency({ value, className = '' }) {
+  const v = useCountUp(value || 0, { duration: 800 })
+  return <span className={className}>{fmtCurrency(v)}</span>
 }

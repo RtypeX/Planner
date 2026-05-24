@@ -3,6 +3,7 @@ import SectionHeader from '../../components/ui/SectionHeader'
 import { useAppData } from '../../lib/AppData'
 import { BMT_TARGETS } from '../../lib/defaults'
 import { secondsToMmss, mmssToSeconds } from '../../lib/calc'
+import { useCountUp } from '../../lib/animation'
 
 export default function BmtStandards() {
   const { fitnessBaselines, setFitnessBaselines, workouts } = useAppData()
@@ -37,13 +38,11 @@ export default function BmtStandards() {
       />
 
       {/* Overall readiness card */}
-      <div className="card-padded mb-4">
+      <div className="card-padded mb-4 card-hover">
         <div className="flex items-end justify-between gap-3 flex-wrap">
           <div>
             <div className="stat-label">Overall readiness</div>
-            <div className="text-3xl font-extrabold tabular-nums mt-1 text-slate-900 dark:text-white">
-              {overall}%
-            </div>
+            <AnimatedReadinessNumber pct={overall} />
             <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
               Average across run, push-ups, sit-ups
             </div>
@@ -52,7 +51,7 @@ export default function BmtStandards() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 stagger">
         <RunStandard
           current={currentRun}
           targetSecs={BMT_TARGETS.runSeconds}
@@ -98,11 +97,21 @@ export default function BmtStandards() {
   )
 }
 
+function AnimatedReadinessNumber({ pct }) {
+  const v = useCountUp(pct, { duration: 1100 })
+  return (
+    <div className="text-3xl font-extrabold tabular-nums mt-1 text-slate-900 dark:text-white">
+      {Math.round(v)}%
+    </div>
+  )
+}
+
 function ReadinessRing({ pct }) {
+  const animPct = useCountUp(pct, { duration: 1100, decimals: 0 })
   const r = 28
   const C = 2 * Math.PI * r
-  const dash = (pct / 100) * C
-  const color = pct >= 100 ? '#10b981' : pct >= 70 ? '#22c55e' : pct >= 40 ? '#f59e0b' : '#ef4444'
+  const dash = (animPct / 100) * C
+  const color = animPct >= 100 ? '#10b981' : animPct >= 70 ? '#22c55e' : animPct >= 40 ? '#f59e0b' : '#ef4444'
   return (
     <svg width="80" height="80" viewBox="0 0 80 80" className="-my-2">
       <circle cx="40" cy="40" r={r} fill="none" strokeWidth="6" className="stroke-slate-200 dark:stroke-white/[0.08]" />
@@ -113,10 +122,10 @@ function ReadinessRing({ pct }) {
         strokeDashoffset={C / 4}
         strokeLinecap="round"
         transform="rotate(-90 40 40)"
-        style={{ transition: 'stroke-dasharray 600ms cubic-bezier(0.16, 1, 0.3, 1)' }}
+        style={{ filter: `drop-shadow(0 0 6px ${color}55)` }}
       />
-      <text x="40" y="44" textAnchor="middle" className="fill-slate-900 dark:fill-white font-extrabold text-sm">
-        {pct}%
+      <text x="40" y="44" textAnchor="middle" className="fill-slate-900 dark:fill-white font-extrabold text-sm tabular-nums">
+        {Math.round(animPct)}%
       </text>
     </svg>
   )

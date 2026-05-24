@@ -6,8 +6,8 @@ import StreakHeatmap from './StreakHeatmap'
 
 export default function FitnessModule() {
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      <header>
+    <div className="space-y-6 sm:space-y-8">
+      <header className="animate-slide-down">
         <div className="page-eyebrow">
           <Dumbbell size={11} /> Fitness
         </div>

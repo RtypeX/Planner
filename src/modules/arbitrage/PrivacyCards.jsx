@@ -85,15 +85,15 @@ export default function PrivacyCards() {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 stagger">
           {privacyCards.map((card) => {
             const remaining = cardUsesRemaining(card, cycles)
             const used = PRIVACY_USES_PER_CARD - remaining
             return (
-              <div key={card.id} className="card overflow-hidden card-hover">
+              <div key={card.id} className="card overflow-hidden card-hover group">
                 {/* Card-style top */}
                 <div className="relative bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700 text-white p-4 pb-5">
-                  <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20" />
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20 transition-transform duration-500 group-hover:scale-110" />
                   <div className="relative flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <CreditCard size={18} />

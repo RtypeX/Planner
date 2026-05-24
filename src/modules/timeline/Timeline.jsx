@@ -92,7 +92,7 @@ export default function Timeline() {
         </div>
       ) : (
         <div className="card-padded">
-          <ol className="relative ml-2 border-l-2 border-dashed border-slate-200 dark:border-white/[0.08] space-y-5">
+          <ol className="relative ml-2 border-l-2 border-dashed border-slate-200 dark:border-white/[0.08] space-y-5 stagger">
             {sorted.map((m) => {
               const cat = CAT_STYLES[m.category] || CAT_STYLES.Life
               const Icon = cat.icon

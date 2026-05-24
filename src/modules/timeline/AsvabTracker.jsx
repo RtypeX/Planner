@@ -79,7 +79,7 @@ export default function AsvabTracker() {
       />
 
       {/* Stat row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 stagger">
         <div className="card-padded">
           <div className="flex items-center gap-2 mb-2">
             <Brain size={14} className="text-brand-600 dark:text-brand-400" />

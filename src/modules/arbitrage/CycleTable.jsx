@@ -43,7 +43,7 @@ export default function CycleList({ cycles, onEdit, onDelete, onNew, privacyCard
   }
   const cardsById = Object.fromEntries(privacyCards.map((c) => [c.id, c]))
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 stagger">
       {cycles.map((c) => (
         <CycleCard
           key={c.id}

@@ -4,8 +4,8 @@ import AsvabTracker from './AsvabTracker'
 
 export default function TimelineModule() {
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      <header>
+    <div className="space-y-6 sm:space-y-8">
+      <header className="animate-slide-down">
         <div className="page-eyebrow">
           <Map size={11} /> Timeline
         </div>

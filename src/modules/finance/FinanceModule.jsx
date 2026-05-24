@@ -8,6 +8,7 @@ import SectionHeader from '../../components/ui/SectionHeader'
 import FinanceCharts from './FinanceCharts'
 import { useAppData } from '../../lib/AppData'
 import { uid } from '../../lib/storage'
+import { useCountUp } from '../../lib/animation'
 import { fmtCurrency, operatingCapital, pendingCardCash, totalAllTimeProfit, paidProfit } from '../../lib/calc'
 
 export default function FinanceModule() {
@@ -35,8 +36,8 @@ export default function FinanceModule() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      <header>
+    <div className="space-y-6 sm:space-y-8">
+      <header className="animate-slide-down">
         <div className="page-eyebrow">
           <Wallet size={11} /> Finance
         </div>
@@ -49,15 +50,13 @@ export default function FinanceModule() {
       </header>
 
       {/* ───────── Net worth hero ───────── */}
-      <div className="card-hero p-5 sm:p-7">
+      <div className="card-hero p-5 sm:p-7 animate-scale-in">
         <div className="relative flex items-start justify-between gap-3 flex-wrap">
           <div>
             <div className="text-[11px] uppercase tracking-wider font-bold text-white/70 flex items-center gap-2">
-              <Sparkles size={11} /> Net worth
+              <Sparkles size={11} className="animate-soft-pulse" /> Net worth
             </div>
-            <div className="text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tight mt-2">
-              {fmtCurrency(netWorth)}
-            </div>
+            <AnimatedHero value={netWorth} className="text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tight mt-2" />
             <div className="mt-1 text-sm text-white/80">
               Liquid + operating + pending + personal savings
             </div>
@@ -66,7 +65,7 @@ export default function FinanceModule() {
             <Wallet size={22} className="text-white" />
           </div>
         </div>
-        <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 stagger">
           <SegBar label="Liquid"    value={liquid}  total={netWorth} dot="bg-sky-300" />
           <SegBar label="Operating" value={op}      total={netWorth} dot="bg-amber-300" />
           <SegBar label="Pending"   value={pending} total={netWorth} dot="bg-violet-300" />
@@ -75,7 +74,7 @@ export default function FinanceModule() {
       </div>
 
       {/* ───────── Editable balances ───────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 stagger">
         <EditableBalance
           label="Liquid cash"
           value={liquid}
@@ -122,7 +121,7 @@ export default function FinanceModule() {
             </button>
           }
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 stagger">
           {goals.map((g) => {
             const value = goalValue(g)
             const pct = Math.min(100, (value / Math.max(1, g.target)) * 100)
@@ -214,6 +213,7 @@ function EditableBalance({ label, value, icon: Icon, accent, onChange }) {
 
 function SegBar({ label, value, total, dot }) {
   const pct = total > 0 ? (value / total) * 100 : 0
+  const animPct = useCountUp(pct, { duration: 900, decimals: 0 })
   return (
     <div className="rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur p-2.5">
       <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1">
@@ -221,11 +221,16 @@ function SegBar({ label, value, total, dot }) {
           <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
           {label}
         </span>
-        <span className="tabular-nums">{pct.toFixed(0)}%</span>
+        <span className="tabular-nums">{animPct.toFixed(0)}%</span>
       </div>
       <div className="text-base font-extrabold tabular-nums tracking-tight">{fmtCurrency(value)}</div>
     </div>
   )
+}
+
+function AnimatedHero({ value, className = '' }) {
+  const v = useCountUp(value, { duration: 1100 })
+  return <div className={className}>{fmtCurrency(v)}</div>
 }
 
 function AddGoal({ open, onClose, onSave }) {
