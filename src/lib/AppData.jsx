@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { STORAGE_KEYS, useLocalStorage, resetAllStorage } from './storage'
 import {
   defaultBalance,
@@ -8,6 +8,8 @@ import {
   defaultAsvab,
   defaultSettings,
 } from './defaults'
+import { fetchTracking, detectCarrier } from './tracking'
+import { todayISO } from './calc'
 
 const AppDataContext = createContext(null)
 
@@ -24,6 +26,96 @@ export function AppDataProvider({ children }) {
   const [asvab, setAsvab] = useLocalStorage(STORAGE_KEYS.asvab, defaultAsvab())
   const [goals, setGoals] = useLocalStorage(STORAGE_KEYS.goals, defaultGoals())
   const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.settings, defaultSettings())
+
+  // Toast queue (single-slot for now; new toast replaces the old)
+  const [toast, setToast] = useState(null)
+  const toastSeq = useRef(0)
+  const showToast = useCallback((next) => {
+    if (!next) return setToast(null)
+    toastSeq.current += 1
+    setToast({ id: toastSeq.current, ...next })
+  }, [])
+
+  // Refresh tracking for a single cycle
+  const refreshTracking = useCallback(
+    async (cycleId) => {
+      const cycle = cycles.find((c) => c.id === cycleId)
+      if (!cycle) throw new Error('Cycle not found')
+      if (!cycle.trackingNumber) throw new Error('No tracking number on this cycle')
+      const carrier = cycle.carrier || detectCarrier(cycle.trackingNumber) || 'UPS'
+      const data = await fetchTracking({
+        proxyUrl: settings.trackingProxyUrl,
+        trackingNumber: cycle.trackingNumber,
+        carrier,
+      })
+      const patch = {
+        carrier,
+        trackingStatus: data.status || cycle.trackingStatus || '',
+        trackingCode: data.code || cycle.trackingCode || '',
+        trackingLastUpdated: data.lastUpdate || cycle.trackingLastUpdated || '',
+        trackingRefreshedAt: new Date().toISOString(),
+        actualDelivery: data.deliveredAt
+          ? data.deliveredAt.slice(0, 10)
+          : cycle.actualDelivery || '',
+      }
+      // If the package is in transit and the cycle is still 'Ordered', auto-bump to 'Shipped'
+      const code = (data.code || '').toUpperCase()
+      const inTransit = code === 'I' || code === 'IT' || code === 'O' || code === 'P' ||
+        /in transit|out for delivery|picked up/i.test(data.status || '')
+      const delivered = code === 'D' || /delivered/i.test(data.status || '')
+      let nextStatus = cycle.status
+      if (cycle.status === 'Ordered' && (inTransit || delivered)) nextStatus = 'Shipped'
+
+      setCycles((prev) =>
+        prev.map((c) => (c.id === cycleId ? { ...c, ...patch, status: nextStatus } : c)),
+      )
+      return { cycle: { ...cycle, ...patch, status: nextStatus }, raw: data }
+    },
+    [cycles, setCycles, settings.trackingProxyUrl],
+  )
+
+  // Refresh every cycle that has a tracking number, sequentially (avoid rate limits)
+  const refreshAllTracking = useCallback(async () => {
+    const targets = cycles.filter((c) => c.trackingNumber && c.status !== 'Paid')
+    if (targets.length === 0) {
+      showToast({ type: 'info', message: 'No cycles with tracking numbers to refresh.' })
+      return { updated: 0, failed: 0 }
+    }
+    if (!settings.trackingProxyUrl) {
+      showToast({
+        type: 'error',
+        title: 'Tracking API not configured',
+        message: 'Open Settings → Tracking API and paste your proxy URL.',
+      })
+      return { updated: 0, failed: 0 }
+    }
+    let updated = 0
+    let failed = 0
+    let lastError = ''
+    for (const c of targets) {
+      try {
+        await refreshTracking(c.id)
+        updated += 1
+      } catch (err) {
+        failed += 1
+        lastError = err?.message || String(err)
+      }
+    }
+    if (failed === 0) {
+      showToast({
+        type: 'success',
+        title: 'Tracking refreshed',
+        message: `Updated ${updated} cycle${updated === 1 ? '' : 's'}.`,
+      })
+    } else {
+      showToast({
+        type: failed === targets.length ? 'error' : 'info',
+        title: `Tracking: ${updated} updated, ${failed} failed`,
+        message: lastError ? `Last error: ${lastError}` : '',
+      })
+    }
+    return { updated, failed }
+  }, [cycles, settings.trackingProxyUrl, refreshTracking, showToast])
 
   // Apply theme on settings change
   useEffect(() => {
@@ -57,8 +149,16 @@ export function AppDataProvider({ children }) {
       goals, setGoals,
       settings, setSettings,
       resetAll,
+      // tracking
+      refreshTracking,
+      refreshAllTracking,
+      // toast
+      toast, showToast,
     }),
-    [cycles, privacyCards, balance, workouts, fitnessBaselines, milestones, asvab, goals, settings],
+    [
+      cycles, privacyCards, balance, workouts, fitnessBaselines, milestones,
+      asvab, goals, settings, refreshTracking, refreshAllTracking, toast, showToast,
+    ],
   )
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>

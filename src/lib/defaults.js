@@ -121,5 +121,6 @@ export function defaultAsvab() {
 export function defaultSettings() {
   return {
     theme: 'dark',
+    trackingProxyUrl: '',
   }
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, DollarSign, Wallet, Clock, TrendingUp, Trophy, Target } from 'lucide-react'
+import { Plus, DollarSign, Wallet, Clock, TrendingUp, Trophy, Target, RefreshCw, Truck } from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Confirm from '../../components/ui/Confirm'
@@ -19,15 +19,21 @@ import {
 } from '../../lib/calc'
 
 export default function ArbitrageModule() {
-  const { cycles, setCycles, balance, setBalance, privacyCards } = useAppData()
+  const {
+    cycles, setCycles, balance, setBalance, privacyCards, settings, refreshAllTracking,
+  } = useAppData()
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [refreshingAll, setRefreshingAll] = useState(false)
 
   const op = operatingCapital(cycles)
   const pending = pendingCardCash(cycles)
   const profit = totalAllTimeProfit(cycles)
   const completed = cyclesCompleted(cycles)
   const liquid = Number(balance.liquidCash || 0)
+
+  const trackedCount = cycles.filter((c) => c.trackingNumber && c.status !== 'Paid').length
+  const proxyConfigured = !!settings.trackingProxyUrl
 
   const saveCycle = (cycle) => {
     if (cycle.id) {
@@ -38,6 +44,11 @@ export default function ArbitrageModule() {
   }
   const deleteCycle = (cycle) => setCycles((prev) => prev.filter((c) => c.id !== cycle.id))
 
+  const handleRefreshAll = async () => {
+    setRefreshingAll(true)
+    try { await refreshAllTracking() } finally { setRefreshingAll(false) }
+  }
+
   return (
     <div className="space-y-6">
       <header className="flex items-end justify-between gap-3 flex-wrap">
@@ -45,9 +56,22 @@ export default function ArbitrageModule() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Arbitrage Tracker</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">iPhone flips · MobileX · CardCash payouts</p>
         </div>
-        <button className="btn-primary" onClick={() => setEditing({})}>
-          <Plus size={16} /> New cycle
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {trackedCount > 0 && (
+            <button
+              className="btn-secondary"
+              onClick={handleRefreshAll}
+              disabled={refreshingAll}
+              title={proxyConfigured ? `Refresh ${trackedCount} active shipments` : 'Configure proxy URL in Settings to enable'}
+            >
+              <RefreshCw size={16} className={refreshingAll ? 'animate-spin' : ''} />
+              {refreshingAll ? 'Refreshing…' : `Refresh tracking (${trackedCount})`}
+            </button>
+          )}
+          <button className="btn-primary" onClick={() => setEditing({})}>
+            <Plus size={16} /> New cycle
+          </button>
+        </div>
       </header>
 
       {/* Dashboard cards */}
@@ -116,10 +140,10 @@ export default function ArbitrageModule() {
         />
 
         <StatCard
-          label="Net worth (arb)"
-          value={fmtCurrency(liquid + op + pending)}
-          sub="Liquid + operating + pending"
-          icon={Wallet}
+          label="In transit"
+          value={trackedCount}
+          sub={proxyConfigured ? 'Live status enabled' : 'Add proxy URL in Settings'}
+          icon={Truck}
           accent="brand"
         />
       </div>
