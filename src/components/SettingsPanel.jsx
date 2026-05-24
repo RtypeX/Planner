@@ -235,6 +235,28 @@ export default function SettingsPanel({ open, onClose }) {
             )}
           </section>
 
+          {/* Gemini AI */}
+          <section>
+            <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
+              <Smartphone size={13} /> Gemini AI
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+              Used by the Sheets Import feature to parse pasted spreadsheet data into cycles.
+              Get a free key at{' '}
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-brand-600 dark:text-brand-400 underline">
+                aistudio.google.com/apikey
+              </a>.
+            </p>
+            <label className="label">API Key</label>
+            <input
+              type="password"
+              placeholder="AIza..."
+              className="input w-full font-mono text-xs"
+              value={settings.geminiApiKey || ''}
+              onChange={(e) => setSettings({ ...settings, geminiApiKey: e.target.value.trim() })}
+            />
+          </section>
+
           {/* Backup */}
           <section>
             <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-700 dark:text-slate-200 mb-3">

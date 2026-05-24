@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Plus, DollarSign, Wallet, Clock, TrendingUp, Target,
-  RefreshCw, Truck, Sparkles, Zap,
+  RefreshCw, Truck, Sparkles, Zap, FileSpreadsheet,
 } from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
 import ProgressBar from '../../components/ui/ProgressBar'
@@ -10,6 +10,7 @@ import CycleForm from './CycleForm'
 import CycleList from './CycleTable'
 import PrivacyCards from './PrivacyCards'
 import Projector from './Projector'
+import SheetsImport from './SheetsImport'
 import { useAppData } from '../../lib/AppData'
 import { uid } from '../../lib/storage'
 import { PC_GOAL } from '../../lib/defaults'
@@ -29,6 +30,7 @@ export default function ArbitrageModule() {
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [refreshingAll, setRefreshingAll] = useState(false)
+  const [sheetsOpen, setSheetsOpen] = useState(false)
 
   const op = operatingCapital(cycles)
   const pending = pendingCardCash(cycles)
@@ -128,6 +130,9 @@ export default function ArbitrageModule() {
               {refreshingAll ? 'Refreshing…' : `Refresh tracking (${trackedCount})`}
             </button>
           )}
+          <button className="btn-secondary" onClick={() => setSheetsOpen(true)}>
+            <FileSpreadsheet size={15} /> Import
+          </button>
           <button className="btn-primary" onClick={() => setEditing({})}>
             <Plus size={16} /> New cycle
           </button>
@@ -286,6 +291,7 @@ export default function ArbitrageModule() {
         confirmLabel="Delete"
         danger
       />
+      <SheetsImport open={sheetsOpen} onClose={() => setSheetsOpen(false)} />
     </div>
   )
 }
