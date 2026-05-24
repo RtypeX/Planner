@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Plus, Pencil, Trash2, Calendar, Briefcase, Dumbbell as DumbbellIcon, Shield, Sparkles, Flag,
+  Search, X, Download,
 } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
-import Confirm from '../../components/ui/Confirm'
 import EmptyState from '../../components/ui/EmptyState'
 import SectionHeader from '../../components/ui/SectionHeader'
 import { useAppData } from '../../lib/AppData'
 import { uid } from '../../lib/storage'
 import { MILESTONE_CATEGORIES, MILESTONE_STATUSES } from '../../lib/defaults'
 import { fmtDate, todayISO } from '../../lib/calc'
+import { downloadIcs } from '../../lib/ical'
 import { differenceInCalendarDays, parseISO, isValid } from 'date-fns'
 
 const CAT_STYLES = {
@@ -51,31 +52,68 @@ const empty = () => ({
 })
 
 export default function Timeline() {
-  const { milestones, setMilestones } = useAppData()
+  const { milestones, setMilestones, undoableDelete, showToast } = useAppData()
   const [editing, setEditing] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return milestones.filter((m) => {
+      if (categoryFilter !== 'all' && m.category !== categoryFilter) return false
+      if (!q) return true
+      return [m.title, m.notes, m.category].filter(Boolean).join(' ').toLowerCase().includes(q)
+    })
+  }, [milestones, search, categoryFilter])
 
   const sorted = useMemo(
-    () => [...milestones].sort((a, b) => (a.date < b.date ? -1 : 1)),
-    [milestones],
+    () => [...filtered].sort((a, b) => (a.date < b.date ? -1 : 1)),
+    [filtered],
   )
 
-  // Listen for command-palette "New milestone" actions
+  // Listen for command-palette "New milestone" / "Export iCal" actions
   useEffect(() => {
     const onNew = () => setEditing(empty())
+    const onExport = () => {
+      if (!milestones.length) {
+        showToast({ type: 'info', message: 'No milestones to export.' })
+        return
+      }
+      downloadIcs(milestones)
+      showToast({ type: 'success', title: 'Exported', message: `${milestones.length} milestone${milestones.length === 1 ? '' : 's'} → .ics` })
+    }
     window.addEventListener('hq:new-milestone', onNew)
-    return () => window.removeEventListener('hq:new-milestone', onNew)
-  }, [])
+    window.addEventListener('hq:export-ical', onExport)
+    return () => {
+      window.removeEventListener('hq:new-milestone', onNew)
+      window.removeEventListener('hq:export-ical', onExport)
+    }
+  }, [milestones, showToast])
 
   const save = (m) => {
     if (m.id) setMilestones((prev) => prev.map((x) => (x.id === m.id ? m : x)))
     else setMilestones((prev) => [...prev, { ...m, id: uid() }])
   }
-  const remove = (m) => setMilestones((prev) => prev.filter((x) => x.id !== m.id))
+  const remove = (m) => {
+    undoableDelete({
+      label: `Milestone "${m.title}"`,
+      perform: () => setMilestones((prev) => prev.filter((x) => x.id !== m.id)),
+      restore: () => setMilestones((prev) => [...prev, m]),
+    })
+  }
   const cycleStatus = (m) => {
     const idx = MILESTONE_STATUSES.indexOf(m.status)
     const next = MILESTONE_STATUSES[(idx + 1) % MILESTONE_STATUSES.length]
     save({ ...m, status: next })
+  }
+
+  const exportToCalendar = () => {
+    if (!milestones.length) {
+      showToast({ type: 'info', message: 'No milestones to export.' })
+      return
+    }
+    downloadIcs(milestones)
+    showToast({ type: 'success', title: 'Exported', message: `${milestones.length} milestone${milestones.length === 1 ? '' : 's'} → .ics` })
   }
 
   return (
@@ -87,11 +125,49 @@ export default function Timeline() {
         title="Life timeline"
         sub="Big rocks from now through Lackland."
         actions={
-          <button className="btn-primary" onClick={() => setEditing(empty())}>
-            <Plus size={16} /> New milestone
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="btn-secondary" onClick={exportToCalendar} title="Export to calendar (.ics)">
+              <Download size={15} /> .ics
+            </button>
+            <button className="btn-primary" onClick={() => setEditing(empty())}>
+              <Plus size={16} /> New milestone
+            </button>
+          </div>
         }
       />
+
+      {/* Search + category filter */}
+      {milestones.length > 0 && (
+        <div className="card-padded mb-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                className="input pl-9 pr-9 text-sm"
+                placeholder="Search milestones…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 btn-ghost !p-1"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap mt-3">
+            <CategoryChip label="All" active={categoryFilter === 'all'} onClick={() => setCategoryFilter('all')} />
+            {MILESTONE_CATEGORIES.map((c) => (
+              <CategoryChip key={c} label={c} active={categoryFilter === c} onClick={() => setCategoryFilter(c)} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {sorted.length === 0 ? (
         <div className="card">
@@ -161,7 +237,7 @@ export default function Timeline() {
                         <button className="btn-ghost !p-1.5" onClick={() => setEditing(m)} aria-label="Edit">
                           <Pencil size={14} />
                         </button>
-                        <button className="btn-ghost !p-1.5 hover:!text-rose-600" onClick={() => setConfirmDelete(m)} aria-label="Delete">
+                        <button className="btn-ghost !p-1.5 hover:!text-rose-600" onClick={() => remove(m)} aria-label="Delete">
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -175,16 +251,21 @@ export default function Timeline() {
       )}
 
       <MilestoneForm open={editing !== null} initial={editing} onClose={() => setEditing(null)} onSave={save} />
-      <Confirm
-        open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={() => remove(confirmDelete)}
-        title="Delete milestone?"
-        message={`Remove "${confirmDelete?.title}"?`}
-        confirmLabel="Delete"
-        danger
-      />
     </section>
+  )
+}
+
+function CategoryChip({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold transition
+        ${active
+          ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-soft'
+          : 'bg-slate-100 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300 hover:opacity-80'}`}
+    >
+      {label}
+    </button>
   )
 }
 

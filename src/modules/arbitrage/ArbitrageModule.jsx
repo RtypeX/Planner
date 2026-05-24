@@ -5,7 +5,6 @@ import {
 } from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
 import ProgressBar from '../../components/ui/ProgressBar'
-import Confirm from '../../components/ui/Confirm'
 import CycleForm from './CycleForm'
 import CycleList from './CycleTable'
 import PrivacyCards from './PrivacyCards'
@@ -26,9 +25,9 @@ import {
 export default function ArbitrageModule() {
   const {
     cycles, setCycles, balance, setBalance, privacyCards, settings, refreshAllTracking,
+    undoableDelete, showToast,
   } = useAppData()
   const [editing, setEditing] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
   const [refreshingAll, setRefreshingAll] = useState(false)
   const [sheetsOpen, setSheetsOpen] = useState(false)
 
@@ -52,7 +51,36 @@ export default function ArbitrageModule() {
     if (cycle.id) setCycles((prev) => prev.map((c) => (c.id === cycle.id ? cycle : c)))
     else setCycles((prev) => [{ ...cycle, id: uid() }, ...prev])
   }
-  const deleteCycle = (cycle) => setCycles((prev) => prev.filter((c) => c.id !== cycle.id))
+  const deleteCycle = (cycle) => {
+    undoableDelete({
+      label: `${cycle.model} × ${cycle.quantity}`,
+      perform: () => setCycles((prev) => prev.filter((c) => c.id !== cycle.id)),
+      restore: () => setCycles((prev) => [cycle, ...prev]),
+    })
+  }
+
+  /** Bulk-update status across many cycles at once. */
+  const bulkSetStatus = (ids, status) => {
+    if (!ids?.length) return
+    setCycles((prev) => prev.map((c) => (ids.includes(c.id) ? { ...c, status } : c)))
+    showToast({ type: 'success', title: 'Updated', message: `Set ${ids.length} cycle${ids.length === 1 ? '' : 's'} to ${status}.` })
+  }
+
+  /** Bulk-delete with undo. Stash the records in case of restore. */
+  const bulkDelete = (ids) => {
+    if (!ids?.length) return
+    const removed = cycles.filter((c) => ids.includes(c.id))
+    undoableDelete({
+      label: `${removed.length} cycle${removed.length === 1 ? '' : 's'}`,
+      perform: () => setCycles((prev) => prev.filter((c) => !ids.includes(c.id))),
+      restore: () => setCycles((prev) => [...removed, ...prev]),
+    })
+  }
+
+  /** Inline status change from the cycle card chip. */
+  const setStatus = (id, status) => {
+    setCycles((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)))
+  }
 
   /**
    * Duplicate a cycle: copy item / cost / payout settings into a fresh draft,
@@ -264,9 +292,12 @@ export default function ArbitrageModule() {
           cycles={cycles}
           privacyCards={privacyCards}
           onEdit={(c) => setEditing(c)}
-          onDelete={(c) => setConfirmDelete(c)}
+          onDelete={(c) => deleteCycle(c)}
           onDuplicate={duplicateCycle}
           onNew={() => setEditing({})}
+          onSetStatus={setStatus}
+          onBulkSetStatus={bulkSetStatus}
+          onBulkDelete={bulkDelete}
         />
       </section>
 
@@ -281,15 +312,6 @@ export default function ArbitrageModule() {
         initial={editing}
         onClose={() => setEditing(null)}
         onSave={saveCycle}
-      />
-      <Confirm
-        open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={() => deleteCycle(confirmDelete)}
-        title="Delete cycle?"
-        message="This permanently removes the cycle from your log."
-        confirmLabel="Delete"
-        danger
       />
       <SheetsImport open={sheetsOpen} onClose={() => setSheetsOpen(false)} />
     </div>

@@ -11,7 +11,7 @@ import { defaultPhoneModels } from '../lib/defaults'
 import { pingProxy } from '../lib/tracking'
 
 export default function SettingsPanel({ open, onClose }) {
-  const { settings, setSettings, resetAll, phoneModels, setPhoneModels } = useAppData()
+  const { settings, setSettings, resetAll, phoneModels, setPhoneModels, markBackedUp, meta } = useAppData()
   const [confirmReset, setConfirmReset] = useState(false)
   const [proxyDraft, setProxyDraft] = useState(settings.trackingProxyUrl || '')
   const [pingState, setPingState] = useState({ state: 'idle', message: '' })
@@ -28,6 +28,7 @@ export default function SettingsPanel({ open, onClose }) {
     a.download = `dylans-hq-backup-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
+    markBackedUp?.()
   }
 
   const importData = (e) => {
@@ -274,6 +275,11 @@ export default function SettingsPanel({ open, onClose }) {
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               Saves a single JSON snapshot of all modules. Importing replaces existing data.
             </p>
+            {meta?.lastBackupAt && (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                Last exported: {new Date(meta.lastBackupAt).toLocaleString()}
+              </p>
+            )}
           </section>
 
           {/* Danger zone */}

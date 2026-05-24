@@ -1,4 +1,4 @@
-import { Map } from 'lucide-react'
+import { Map as MapIcon } from 'lucide-react'
 import Timeline from './Timeline'
 import AsvabTracker from './AsvabTracker'
 
@@ -7,7 +7,7 @@ export default function TimelineModule() {
     <div className="space-y-6 sm:space-y-8">
       <header className="animate-slide-down">
         <div className="page-eyebrow">
-          <Map size={11} /> Timeline
+          <MapIcon size={11} /> Timeline
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 text-slate-900 dark:text-white">
           The path to BMT

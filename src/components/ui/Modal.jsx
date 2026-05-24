@@ -1,15 +1,58 @@
 import { X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+
+const FOCUSABLE = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 export default function Modal({ open, onClose, title, eyebrow, children, footer, size = 'md' }) {
+  const dialogRef = useRef(null)
+  const previouslyFocusedRef = useRef(null)
+
   useEffect(() => {
     if (!open) return
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
+
+    // Save the element that had focus before the modal opened so we can
+    // restore it on close — important for keyboard / screen-reader users.
+    previouslyFocusedRef.current = document.activeElement
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        onClose?.()
+        return
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        // Focus trap: cycle Tab focus inside the dialog.
+        const focusables = dialogRef.current.querySelectorAll(FOCUSABLE)
+        if (focusables.length === 0) return
+        const first = focusables[0]
+        const last = focusables[focusables.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
+
+    // Focus the first focusable element after the dialog mounts.
+    requestAnimationFrame(() => {
+      const focusable = dialogRef.current?.querySelector(FOCUSABLE)
+      focusable?.focus()
+    })
+
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
+      // Restore focus to whatever opened the modal.
+      const el = previouslyFocusedRef.current
+      if (el && typeof el.focus === 'function') {
+        try { el.focus() } catch { /* element may be gone */ }
+      }
     }
   }, [open, onClose])
 
@@ -21,13 +64,19 @@ export default function Modal({ open, onClose, title, eyebrow, children, footer,
     xl: 'max-w-4xl',
   }
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
       <div
         className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden
       />
       <div
+        ref={dialogRef}
         className={`relative w-full ${widths[size] || widths.md} max-h-[92vh] overflow-y-auto
                     rounded-t-2xl sm:rounded-2xl
                     bg-white dark:bg-slate-900

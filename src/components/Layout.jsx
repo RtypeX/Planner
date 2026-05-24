@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
-  Home, TrendingUp, Dumbbell, Map, Wallet,
-  Settings as SettingsIcon, Menu, X,
+  Home, TrendingUp, Dumbbell, Map as MapIcon, Wallet,
+  Settings as SettingsIcon, Menu, X, Bot,
 } from 'lucide-react'
 import SettingsPanel from './SettingsPanel'
 
@@ -9,7 +9,7 @@ const NAV = [
   { id: 'home',      label: 'Home',      icon: Home },
   { id: 'arbitrage', label: 'Arbitrage', icon: TrendingUp },
   { id: 'fitness',   label: 'Fitness',   icon: Dumbbell },
-  { id: 'timeline',  label: 'Timeline',  icon: Map },
+  { id: 'timeline',  label: 'Timeline',  icon: MapIcon },
   { id: 'finance',   label: 'Finance',   icon: Wallet },
 ]
 
@@ -18,6 +18,7 @@ export default function Layout({
   // App.jsx owns settings-open state so the command palette can toggle it.
   settingsOpen: ctlSettingsOpen,
   setSettingsOpen: ctlSetSettingsOpen,
+  onOpenAssistant,
 }) {
   const [internalSettingsOpen, setInternalSettingsOpen] = useState(false)
   const settingsOpen = ctlSettingsOpen ?? internalSettingsOpen
@@ -43,6 +44,16 @@ export default function Layout({
         </nav>
         <div className="p-3 border-t border-slate-200/70 dark:border-white/[0.05] space-y-1">
           <KbdHint />
+          {onOpenAssistant && (
+            <button
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+                         text-slate-600 dark:text-slate-300
+                         hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+              onClick={onOpenAssistant}
+            >
+              <Bot size={17} /> AI assistant
+            </button>
+          )}
           <button
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
                        text-slate-600 dark:text-slate-300
@@ -100,6 +111,16 @@ export default function Layout({
               ))}
             </nav>
             <div className="p-3 border-t border-slate-200 dark:border-white/[0.06]">
+              {onOpenAssistant && (
+                <button
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+                             text-slate-600 dark:text-slate-300
+                             hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+                  onClick={() => { onOpenAssistant(); setMobileMenuOpen(false) }}
+                >
+                  <Bot size={17} /> AI assistant
+                </button>
+              )}
               <button
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
                            text-slate-600 dark:text-slate-300

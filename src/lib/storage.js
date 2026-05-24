@@ -11,6 +11,21 @@ export const STORAGE_KEYS = {
   goals: 'dylan_goals',
   settings: 'dylan_settings',
   phoneModels: 'dylan_phone_models',
+  meta: 'dylan_meta', // last-backup timestamp, etc.
+}
+
+// ─── Write-failure listeners ────────────────────────────────────────────
+// Subscribers get notified when a write fails (quota, security policy, etc.)
+// so the UI can surface a persistent banner instead of swallowing the error.
+const writeFailureListeners = new Set()
+export function onStorageFailure(fn) {
+  writeFailureListeners.add(fn)
+  return () => writeFailureListeners.delete(fn)
+}
+function notifyFailure(err, key) {
+  writeFailureListeners.forEach((fn) => {
+    try { fn(err, key) } catch { /* ignore */ }
+  })
 }
 
 export function loadFromStorage(key, fallback) {
@@ -30,7 +45,8 @@ export function saveToStorage(key, value) {
   try {
     window.localStorage.setItem(key, JSON.stringify(value))
   } catch (e) {
-    console.warn('Failed to save', key, e)
+    console.error('Failed to save', key, e)
+    notifyFailure(e, key)
   }
 }
 

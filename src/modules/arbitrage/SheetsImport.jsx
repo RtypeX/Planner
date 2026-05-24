@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Sparkles, Upload, X, Check, AlertTriangle } from 'lucide-react'
+import { Sparkles, X, Check, AlertTriangle } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
 import { useAppData } from '../../lib/AppData'
 import { uid } from '../../lib/storage'
 import { DEFAULT_CARDCASH_RATE } from '../../lib/defaults'
 import { todayISO, plusDaysISO } from '../../lib/calc'
+import { generate, extractText, parseJsonish } from '../../lib/gemini'
 
 const SYSTEM_PROMPT = `You parse spreadsheet data into iPhone arbitrage cycle objects. Return ONLY a JSON array (no markdown, no explanation). Each object must have exactly these fields:
 - model (string, e.g. "iPhone 16e")
@@ -22,27 +23,13 @@ const SYSTEM_PROMPT = `You parse spreadsheet data into iPhone arbitrage cycle ob
 Infer values from context. If a field is missing, use sensible defaults. Dates should be YYYY-MM-DD. Return [] if you cannot parse anything.`
 
 async function callGemini(apiKey, pastedText) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ parts: [{ text: `Parse this spreadsheet data into cycles:\n\n${pastedText}` }] }],
-        generationConfig: { temperature: 0.1 },
-      }),
-    },
-  )
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Gemini API error (${res.status}): ${err}`)
-  }
-  const data = await res.json()
-  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  // Strip markdown fences if present
-  const cleaned = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim()
-  return JSON.parse(cleaned)
+  const response = await generate({
+    apiKey,
+    systemInstruction: SYSTEM_PROMPT,
+    contents: [{ role: 'user', parts: [{ text: `Parse this spreadsheet data into cycles:\n\n${pastedText}` }] }],
+    generationConfig: { temperature: 0.1 },
+  })
+  return parseJsonish(extractText(response))
 }
 
 export default function SheetsImport({ open, onClose }) {

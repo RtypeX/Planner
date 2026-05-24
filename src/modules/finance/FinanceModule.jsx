@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Wallet, DollarSign, Clock, PiggyBank, Plus, Trash2, Target, Sparkles } from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
 import ProgressBar from '../../components/ui/ProgressBar'
-import Confirm from '../../components/ui/Confirm'
 import Modal from '../../components/ui/Modal'
 import SectionHeader from '../../components/ui/SectionHeader'
 import FinanceCharts from './FinanceCharts'
@@ -12,9 +11,8 @@ import { useCountUp } from '../../lib/animation'
 import { fmtCurrency, operatingCapital, pendingCardCash, totalAllTimeProfit, paidProfit } from '../../lib/calc'
 
 export default function FinanceModule() {
-  const { balance, setBalance, cycles, goals, setGoals } = useAppData()
+  const { balance, setBalance, cycles, goals, setGoals, undoableDelete } = useAppData()
   const [adding, setAdding] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const op = operatingCapital(cycles)
   const pending = pendingCardCash(cycles)
@@ -28,7 +26,13 @@ export default function FinanceModule() {
 
   const addGoal = (g) => setGoals([...goals, { ...g, id: uid(), locked: false }])
   const updateGoal = (id, patch) => setGoals(goals.map((g) => (g.id === id ? { ...g, ...patch } : g)))
-  const deleteGoal = (id) => setGoals(goals.filter((g) => g.id !== id))
+  const deleteGoal = (g) => {
+    undoableDelete({
+      label: `Goal "${g.name}"`,
+      perform: () => setGoals((prev) => prev.filter((x) => x.id !== g.id)),
+      restore: () => setGoals((prev) => [...prev, g]),
+    })
+  }
 
   const goalValue = (g) => {
     if (g.id === 'g-pc') return Math.max(0, totalAllTimeProfit(cycles))
@@ -146,7 +150,7 @@ export default function FinanceModule() {
                     {!g.locked && (
                       <button
                         className="btn-ghost !p-1.5 hover:!text-rose-600"
-                        onClick={() => setConfirmDelete(g)}
+                        onClick={() => deleteGoal(g)}
                         aria-label="Delete goal"
                       >
                         <Trash2 size={14} />
@@ -170,15 +174,6 @@ export default function FinanceModule() {
       <FinanceCharts />
 
       <AddGoal open={adding} onClose={() => setAdding(false)} onSave={addGoal} />
-      <Confirm
-        open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={() => deleteGoal(confirmDelete.id)}
-        title="Delete goal?"
-        message={`Remove "${confirmDelete?.name}"?`}
-        confirmLabel="Delete"
-        danger
-      />
     </div>
   )
 }

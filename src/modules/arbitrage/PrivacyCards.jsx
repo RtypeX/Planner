@@ -3,7 +3,6 @@ import {
   Plus, Pencil, Trash2, CreditCard, Wifi, FileText, DollarSign,
 } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
-import Confirm from '../../components/ui/Confirm'
 import EmptyState from '../../components/ui/EmptyState'
 import SectionHeader from '../../components/ui/SectionHeader'
 import ProgressBar from '../../components/ui/ProgressBar'
@@ -46,9 +45,8 @@ function gradientFor(color) {
 }
 
 export default function PrivacyCards() {
-  const { privacyCards, setPrivacyCards, cycles } = useAppData()
+  const { privacyCards, setPrivacyCards, cycles, undoableDelete } = useAppData()
   const [editing, setEditing] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const usedThisMonth = cardsUsedThisMonth(cycles)
   const monthPct = Math.min(100, (usedThisMonth / PRIVACY_MONTHLY_LIMIT) * 100)
@@ -57,7 +55,13 @@ export default function PrivacyCards() {
     if (card.id) setPrivacyCards((prev) => prev.map((c) => (c.id === card.id ? card : c)))
     else setPrivacyCards((prev) => [...prev, { ...card, id: uid() }])
   }
-  const remove = (card) => setPrivacyCards((prev) => prev.filter((c) => c.id !== card.id))
+  const remove = (card) => {
+    undoableDelete({
+      label: `Card "${card.nickname}"`,
+      perform: () => setPrivacyCards((prev) => prev.filter((c) => c.id !== card.id)),
+      restore: () => setPrivacyCards((prev) => [...prev, card]),
+    })
+  }
 
   return (
     <section>
@@ -120,7 +124,7 @@ export default function PrivacyCards() {
                 used={used}
                 spent={spent}
                 onEdit={() => setEditing(card)}
-                onDelete={() => setConfirmDelete(card)}
+                onDelete={() => remove(card)}
               />
             )
           })}
@@ -128,15 +132,6 @@ export default function PrivacyCards() {
       )}
 
       <CardForm open={!!editing} initial={editing} onClose={() => setEditing(null)} onSave={save} />
-      <Confirm
-        open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={() => remove(confirmDelete)}
-        title="Delete card?"
-        message={`Remove "${confirmDelete?.nickname}" from your privacy card list?`}
-        confirmLabel="Delete"
-        danger
-      />
     </section>
   )
 }

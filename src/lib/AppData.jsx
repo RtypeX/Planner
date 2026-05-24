@@ -1,5 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { STORAGE_KEYS, useLocalStorage, resetAllStorage } from './storage'
+import {
+  STORAGE_KEYS, useLocalStorage, resetAllStorage,
+  loadFromStorage, saveToStorage, onStorageFailure,
+} from './storage'
 import {
   defaultBalance,
   defaultFitnessBaselines,
@@ -45,6 +48,8 @@ export function AppDataProvider({ children }) {
   const [phoneModelsRaw, setPhoneModels] = useLocalStorage(STORAGE_KEYS.phoneModels, defaultPhoneModels())
   const phoneModels = useMemo(() => migratePhoneModels(phoneModelsRaw), [phoneModelsRaw])
 
+  const [meta, setMeta] = useLocalStorage(STORAGE_KEYS.meta, { lastBackupAt: null })
+
   // Toast queue (single-slot for now; new toast replaces the old)
   const [toast, setToast] = useState(null)
   const toastSeq = useRef(0)
@@ -53,6 +58,19 @@ export function AppDataProvider({ children }) {
     toastSeq.current += 1
     setToast({ id: toastSeq.current, ...next })
   }, [])
+
+  // ── Persistent storage-failure banner ──────────────────────────
+  const [storageError, setStorageError] = useState(null)
+  useEffect(() => {
+    return onStorageFailure((err, key) => {
+      setStorageError({
+        key,
+        message: err?.message || 'Failed to save data',
+        at: Date.now(),
+      })
+    })
+  }, [])
+  const clearStorageError = useCallback(() => setStorageError(null), [])
 
   // Refresh tracking for a single cycle
   const refreshTracking = useCallback(
@@ -134,6 +152,23 @@ export function AppDataProvider({ children }) {
     return { updated, failed }
   }, [cycles, settings.trackingProxyUrl, refreshTracking, showToast])
 
+  // ── Undoable deletes ───────────────────────────────────────────
+  // Stash the deleted record + a re-insert function and surface an Undo
+  // button on the toast for ~6 seconds.
+  const undoableDelete = useCallback(
+    ({ label, restore, perform }) => {
+      perform()
+      showToast({
+        type: 'info',
+        title: 'Deleted',
+        message: label,
+        duration: 6500,
+        action: { label: 'Undo', onClick: restore },
+      })
+    },
+    [showToast],
+  )
+
   // Apply theme on settings change
   useEffect(() => {
     const root = document.documentElement
@@ -153,7 +188,12 @@ export function AppDataProvider({ children }) {
     setGoals(defaultGoals())
     setSettings(defaultSettings())
     setPhoneModels(defaultPhoneModels())
+    setMeta({ lastBackupAt: null })
   }
+
+  const markBackedUp = useCallback(() => {
+    setMeta((m) => ({ ...m, lastBackupAt: new Date().toISOString() }))
+  }, [setMeta])
 
   const value = useMemo(
     () => ({
@@ -167,16 +207,21 @@ export function AppDataProvider({ children }) {
       goals, setGoals,
       settings, setSettings,
       phoneModels, setPhoneModels,
+      meta, setMeta, markBackedUp,
       resetAll,
       // tracking
       refreshTracking,
       refreshAllTracking,
       // toast
       toast, showToast,
+      undoableDelete,
+      // storage health
+      storageError, clearStorageError,
     }),
     [
       cycles, privacyCards, balance, workouts, fitnessBaselines, milestones,
-      asvab, goals, settings, phoneModels, refreshTracking, refreshAllTracking, toast, showToast,
+      asvab, goals, settings, phoneModels, meta, refreshTracking, refreshAllTracking,
+      toast, showToast, undoableDelete, storageError, clearStorageError, markBackedUp, setMeta,
     ],
   )
 

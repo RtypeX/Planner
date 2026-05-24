@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Search, Home, TrendingUp, Dumbbell, Map, Wallet, Settings as SettingsIcon,
-  Plus, RefreshCw, Sun, Moon, Trash2, ArrowDownUp, CornerDownLeft, X,
+  Search, Home, TrendingUp, Dumbbell, Map as MapIcon, Wallet, Settings as SettingsIcon,
+  Plus, RefreshCw, Sun, Moon, Trash2, ArrowDownUp, CornerDownLeft, X, Bot, Calendar,
 } from 'lucide-react'
 import { useAppData } from '../lib/AppData'
 
@@ -10,7 +10,7 @@ import { useAppData } from '../lib/AppData'
  * Items are split into NAV, ACTION, and CYCLES (recent) sections. Filter is a
  * simple case-insensitive substring match against label and subtitle.
  */
-export default function CommandPalette({ open, onClose, goTo, openSettings }) {
+export default function CommandPalette({ open, onClose, goTo, openSettings, openAssistant }) {
   const {
     cycles, refreshAllTracking, settings, setSettings,
   } = useAppData()
@@ -35,9 +35,15 @@ export default function CommandPalette({ open, onClose, goTo, openSettings }) {
       { id: 'nav-home',      group: 'Pages',   label: 'Home',      icon: Home,       keywords: 'dashboard',       action: () => goTo('home') },
       { id: 'nav-arbitrage', group: 'Pages',   label: 'Arbitrage', icon: TrendingUp, keywords: 'cycles iphone',   action: () => goTo('arbitrage') },
       { id: 'nav-fitness',   group: 'Pages',   label: 'Fitness',   icon: Dumbbell,   keywords: 'workout bmt run', action: () => goTo('fitness') },
-      { id: 'nav-timeline',  group: 'Pages',   label: 'Timeline',  icon: Map,        keywords: 'milestone asvab', action: () => goTo('timeline') },
+      { id: 'nav-timeline',  group: 'Pages',   label: 'Timeline',  icon: MapIcon,    keywords: 'milestone asvab', action: () => goTo('timeline') },
       { id: 'nav-finance',   group: 'Pages',   label: 'Finance',   icon: Wallet,     keywords: 'goals net worth', action: () => goTo('finance') },
       { id: 'nav-settings',  group: 'Pages',   label: 'Settings',  icon: SettingsIcon, keywords: 'preferences theme tracking', action: () => openSettings() },
+      ...(openAssistant ? [{
+        id: 'nav-assistant', group: 'Pages',
+        label: 'AI assistant', subtitle: 'Chat to log entries from Sheets data',
+        icon: Bot, keywords: 'chat ai gemini sheets import',
+        action: () => openAssistant(),
+      }] : []),
 
       // Quick actions
       {
@@ -65,6 +71,12 @@ export default function CommandPalette({ open, onClose, goTo, openSettings }) {
         action: () => refreshAllTracking(),
       },
       {
+        id: 'act-export-ical', group: 'Actions',
+        label: 'Export milestones to calendar', subtitle: 'Download .ics file',
+        icon: Calendar, keywords: 'ical calendar timeline export',
+        action: () => window.dispatchEvent(new CustomEvent('hq:export-ical')),
+      },
+      {
         id: 'act-toggle-theme', group: 'Actions',
         label: settings.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
         subtitle: 'Toggle appearance',
@@ -90,7 +102,7 @@ export default function CommandPalette({ open, onClose, goTo, openSettings }) {
       }))
 
     return [...items, ...recent]
-  }, [cycles, settings, goTo, openSettings, refreshAllTracking, setSettings])
+  }, [cycles, settings, goTo, openSettings, refreshAllTracking, setSettings, openAssistant])
 
   // Filter
   const filtered = useMemo(() => {

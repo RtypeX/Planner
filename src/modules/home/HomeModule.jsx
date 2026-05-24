@@ -15,11 +15,13 @@ import {
   totalAllTimeProfit, cyclesCompleted, operatingCapital, pendingCardCash,
 } from '../../lib/calc'
 import {
-  greeting, pickHeroFocus, getActiveShipments, getNextMilestones, getWeekStats,
+  greeting, pickHeroFocus, getActiveShipments, getNextMilestones, getWeekStats, getWorkoutStreak,
 } from '../../lib/insights'
 import CycleForm from '../arbitrage/CycleForm'
+import BackupReminder from '../../components/BackupReminder'
+import WeeklySummary from '../../components/WeeklySummary'
 
-export default function HomeModule({ goTo }) {
+export default function HomeModule({ goTo, onOpenAssistant }) {
   const {
     cycles, setCycles, balance, workouts, milestones, fitnessBaselines,
   } = useAppData()
@@ -45,15 +47,9 @@ export default function HomeModule({ goTo }) {
   const sitScore = Math.min(100, ((fitnessBaselines.situps || 0) / BMT_TARGETS.situpsGoal) * 100)
   const readiness = Math.round((runScore + pushScore + sitScore) / 3)
 
-  // Streak
-  const today = new Date().toISOString().slice(0, 10)
-  const dates = new Set(workouts.map((w) => w.date).filter(Boolean))
-  let streak = 0
-  let cursor = new Date()
-  while (dates.has(cursor.toISOString().slice(0, 10))) {
-    streak += 1
-    cursor.setDate(cursor.getDate() - 1)
-  }
+  // Streak — uses the latest-logged-day anchor so today not yet logged
+  // doesn't reset the count.
+  const { streak, atRisk } = getWorkoutStreak(workouts)
 
   const profitAnim = useCountUp(Math.max(0, profit), { duration: 1000 })
   const netWorthAnim = useCountUp(netWorth, { duration: 1000 })
@@ -67,6 +63,8 @@ export default function HomeModule({ goTo }) {
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      <BackupReminder />
+
       {/* Greeting + quick actions */}
       <header className="flex items-end justify-between gap-3 flex-wrap animate-slide-down">
         <div>
@@ -79,6 +77,11 @@ export default function HomeModule({ goTo }) {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {onOpenAssistant && (
+            <button className="btn-secondary" onClick={onOpenAssistant} title="Open AI assistant">
+              <Sparkles size={15} /> Ask AI
+            </button>
+          )}
           <button className="btn-secondary" onClick={() => goTo?.('fitness')}>
             <Dumbbell size={15} /> Log workout
           </button>
@@ -132,9 +135,9 @@ export default function HomeModule({ goTo }) {
             variant="compact"
             label="Workout streak"
             value={`${streakAnim} d`}
-            sub={streak > 0 ? '🔥 Keep it up' : 'Log one to start'}
+            sub={streak > 0 ? (atRisk ? '⚠️ Log today to extend' : '🔥 Keep it up') : 'Log one to start'}
             icon={Flame}
-            accent={streak > 0 ? 'amber' : 'slate'}
+            accent={streak > 0 ? (atRisk ? 'amber' : 'amber') : 'slate'}
           />
         </button>
       </div>
@@ -257,6 +260,9 @@ export default function HomeModule({ goTo }) {
           />
         </div>
       </section>
+
+      {/* AI weekly summary */}
+      <WeeklySummary onOpenAssistant={onOpenAssistant} />
 
       <CycleForm
         open={editingCycle !== null}

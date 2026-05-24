@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Plus, Pencil, Trash2, ListChecks, Activity, Dumbbell, Timer, Award, Zap } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
-import Confirm from '../../components/ui/Confirm'
 import EmptyState from '../../components/ui/EmptyState'
 import SectionHeader from '../../components/ui/SectionHeader'
 import { useAppData } from '../../lib/AppData'
@@ -29,9 +28,8 @@ const TYPE_STYLES = {
 }
 
 export default function WorkoutLog() {
-  const { workouts, setWorkouts, showToast } = useAppData()
+  const { workouts, setWorkouts, showToast, undoableDelete } = useAppData()
   const [editing, setEditing] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const sorted = [...workouts].sort((a, b) => (a.date < b.date ? 1 : -1))
   const pbs = useMemo(() => getPersonalBests(workouts), [workouts])
@@ -64,7 +62,13 @@ export default function WorkoutLog() {
       }
     }
   }
-  const remove = (w) => setWorkouts((prev) => prev.filter((x) => x.id !== w.id))
+  const remove = (w) => {
+    undoableDelete({
+      label: `Workout from ${w.date}`,
+      perform: () => setWorkouts((prev) => prev.filter((x) => x.id !== w.id)),
+      restore: () => setWorkouts((prev) => [...prev, w]),
+    })
+  }
 
   /** Quick-log helpers — open the form prefilled, user can adjust then save. */
   const quickRun = () => setEditing({ ...empty(), type: 'Run' })
@@ -212,7 +216,7 @@ export default function WorkoutLog() {
                           <button className="btn-ghost !p-1.5" onClick={() => setEditing(w)} aria-label="Edit">
                             <Pencil size={14} />
                           </button>
-                          <button className="btn-ghost !p-1.5 hover:!text-rose-600" onClick={() => setConfirmDelete(w)} aria-label="Delete">
+                          <button className="btn-ghost !p-1.5 hover:!text-rose-600" onClick={() => remove(w)} aria-label="Delete">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -227,15 +231,6 @@ export default function WorkoutLog() {
       </div>
 
       <WorkoutForm open={editing !== null} initial={editing} onClose={() => setEditing(null)} onSave={save} />
-      <Confirm
-        open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={() => remove(confirmDelete)}
-        title="Delete workout?"
-        message="Remove this entry from your log?"
-        confirmLabel="Delete"
-        danger
-      />
     </section>
   )
 }

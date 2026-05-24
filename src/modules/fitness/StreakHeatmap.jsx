@@ -92,7 +92,7 @@ export default function StreakHeatmap() {
 
       <div className="card-padded">
         <div className="overflow-x-auto -mx-1">
-          <div className="px-1 inline-block min-w-full">
+          <div className="px-1 inline-block min-w-full" role="grid" aria-label={`Workout activity heatmap, ${totals.activeDays} active days, ${totals.totalSessions} sessions`}>
             <div className="flex gap-[3px] mb-1.5 ml-5">
               {monthLabels.map((l, i) => (
                 <div key={i} className="w-[14px] text-[10px] font-semibold text-slate-500 dark:text-slate-400">{l}</div>
@@ -109,11 +109,13 @@ export default function StreakHeatmap() {
                 <div className="h-[14px] leading-[14px]"></div>
               </div>
               {grid.map((col, i) => (
-                <div key={i} className="flex flex-col gap-[3px]">
+                <div key={i} className="flex flex-col gap-[3px]" role="row">
                   {col.map((cell) => (
                     <div
                       key={cell.key}
                       title={`${cell.key} — ${cell.count} workout${cell.count === 1 ? '' : 's'}`}
+                      aria-label={`${cell.key}, ${cell.count} workout${cell.count === 1 ? '' : 's'}`}
+                      role="gridcell"
                       className={`w-[14px] h-[14px] rounded-[3px] transition-colors ${cellColor(cell.count)}`}
                     />
                   ))}

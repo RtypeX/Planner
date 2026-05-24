@@ -29,31 +29,39 @@ export function getNextMilestones(milestones, n = 3) {
     .slice(0, n)
 }
 
-/** Stats for the last 7 days (rolling). */
+/**
+ * Stats for the last 7 days (rolling).
+ *
+ * Each metric uses its own date field — e.g. cycles paid this week filter on
+ * cardCashPaidDate, not orderDate. (Earlier versions filtered everything by
+ * orderDate first which silently undercounted.)
+ */
 export function getWeekStats(cycles, workouts) {
   const cutoff = subDays(new Date(), 7)
+  const after = (iso) => {
+    if (!iso) return false
+    try { return isAfter(parseISO(iso), cutoff) } catch { return false }
+  }
 
-  const recentCycles = cycles.filter((c) => {
-    if (!c.orderDate) return false
-    try { return isAfter(parseISO(c.orderDate), cutoff) } catch { return false }
-  })
-  const recentWorkouts = workouts.filter((w) => {
-    if (!w.date) return false
-    try { return isAfter(parseISO(w.date), cutoff) } catch { return false }
-  })
+  const cyclesAdded = cycles.filter((c) => after(c.orderDate)).length
+  const cyclesPaidThisWeek = cycles.filter((c) => c.status === 'Paid' && after(c.cardCashPaidDate)).length
+  const recentWorkouts = workouts.filter((w) => after(w.date)).length
 
-  const profitDelta = recentCycles.reduce((sum, c) => sum + netProfit(c), 0)
-  const cyclesPaidThisWeek = recentCycles.filter((c) => {
-    if (c.status !== 'Paid') return false
-    if (!c.cardCashPaidDate) return false
-    try { return isAfter(parseISO(c.cardCashPaidDate), cutoff) } catch { return false }
-  }).length
+  // Profit added = sum of net profit from cycles whose status changed *to*
+  // a profit-realizing state in the last 7 days. We approximate with
+  // cardCashPaidDate (realized) plus orderDate-week pending profit.
+  const realized = cycles
+    .filter((c) => c.status === 'Paid' && after(c.cardCashPaidDate))
+    .reduce((sum, c) => sum + netProfit(c), 0)
+  const newPending = cycles
+    .filter((c) => c.status !== 'Paid' && after(c.orderDate))
+    .reduce((sum, c) => sum + netProfit(c), 0)
 
   return {
-    cyclesAdded: recentCycles.length,
+    cyclesAdded,
     cyclesPaid: cyclesPaidThisWeek,
-    workouts: recentWorkouts.length,
-    profitDelta,
+    workouts: recentWorkouts,
+    profitDelta: realized + newPending,
   }
 }
 
@@ -78,6 +86,40 @@ export function isPersonalBest(workout, allWorkouts) {
   if (Number(workout.pushups) > 0 && workout.pushups > pb.bestPushups) flags.pushups = true
   if (Number(workout.situps) > 0 && workout.situps > pb.bestSitups) flags.situps = true
   return flags
+}
+
+/**
+ * Workout streak that tolerates "today not logged yet". Counts consecutive
+ * days ending at today *or* yesterday — whichever is the latest day with a
+ * logged workout. So a 12-day streak still reads as 12 first thing in the
+ * morning before you've worked out today, instead of resetting to 0.
+ */
+export function getWorkoutStreak(workouts) {
+  const dates = new Set(workouts.map((w) => w.date).filter(Boolean))
+  if (dates.size === 0) return { streak: 0, includesToday: false, atRisk: false }
+  const todayIso = new Date().toISOString().slice(0, 10)
+  const yest = new Date()
+  yest.setDate(yest.getDate() - 1)
+  const yestIso = yest.toISOString().slice(0, 10)
+
+  // Find the latest logged day to anchor the count from.
+  let cursor
+  let includesToday = false
+  if (dates.has(todayIso)) {
+    cursor = new Date(todayIso)
+    includesToday = true
+  } else if (dates.has(yestIso)) {
+    cursor = new Date(yestIso)
+  } else {
+    return { streak: 0, includesToday: false, atRisk: false }
+  }
+
+  let streak = 0
+  while (dates.has(cursor.toISOString().slice(0, 10))) {
+    streak += 1
+    cursor.setDate(cursor.getDate() - 1)
+  }
+  return { streak, includesToday, atRisk: !includesToday }
 }
 
 /**

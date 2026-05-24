@@ -51,7 +51,6 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
       model: m.name,
       costPerUnit: m.cost,
       mobileXCost: m.mobileX,
-      tradeIn: m.tradeIn,
       tradeInValue: m.tradeIn,
     })
   }
@@ -107,7 +106,25 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
     net: netProfit(form),
   }), [form])
 
+  // Inline validation — keep this simple and field-level.
+  const errors = useMemo(() => {
+    const e = {}
+    if (!Number.isFinite(Number(form.quantity)) || Number(form.quantity) < 1) e.quantity = 'Must be at least 1'
+    if (Number(form.costPerUnit) < 0) e.costPerUnit = 'Cannot be negative'
+    if (Number(form.mobileXCost) < 0) e.mobileXCost = 'Cannot be negative'
+    if (Number(form.tradeInValue) < 0) e.tradeInValue = 'Cannot be negative'
+    if (Number(form.cardCashRate) < 0 || Number(form.cardCashRate) > 1) e.cardCashRate = 'Must be 0–1'
+    if (form.actualPayout !== '' && Number(form.actualPayout) < 0) e.actualPayout = 'Cannot be negative'
+    return e
+  }, [form])
+
+  const hasErrors = Object.keys(errors).length > 0
+
   const handleSave = () => {
+    if (hasErrors) {
+      showToast({ type: 'error', title: 'Fix errors first', message: Object.values(errors)[0] })
+      return
+    }
     onSave(form)
     onClose()
   }
@@ -133,7 +150,7 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
       footer={
         <>
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" onClick={handleSave}>Save cycle</button>
+          <button className="btn-primary" onClick={handleSave} disabled={hasErrors}>Save cycle</button>
         </>
       }
     >

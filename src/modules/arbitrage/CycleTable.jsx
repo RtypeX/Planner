@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Pencil, Trash2, ExternalLink, RefreshCw, Truck, Smartphone,
-  ArrowRight, CalendarClock, Plus, Package, Search, X, Copy,
+  ArrowRight, CalendarClock, Plus, Package, Search, X, Copy, Check, ChevronDown,
 } from 'lucide-react'
 import EmptyState from '../../components/ui/EmptyState'
 import { fmtCurrency, fmtDateShort, expectedPayout, netProfit, totalCost } from '../../lib/calc'
@@ -25,9 +25,13 @@ const TONE_STYLES = {
   slate:   'bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300 ring-1 ring-slate-200/70 dark:ring-white/10',
 }
 
-export default function CycleList({ cycles, onEdit, onDelete, onNew, onDuplicate, privacyCards }) {
+export default function CycleList({
+  cycles, onEdit, onDelete, onNew, onDuplicate, privacyCards,
+  onSetStatus, onBulkSetStatus, onBulkDelete,
+}) {
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState(() => new Set())
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -49,6 +53,17 @@ export default function CycleList({ cycles, onEdit, onDelete, onNew, onDuplicate
     return counts
   }, [cycles])
 
+  // Drop selections that are no longer in `cycles` (e.g. after bulk-delete).
+  useEffect(() => {
+    const ids = new Set(cycles.map((c) => c.id))
+    setSelected((prev) => {
+      let changed = false
+      const next = new Set()
+      prev.forEach((id) => { if (ids.has(id)) next.add(id); else changed = true })
+      return changed ? next : prev
+    })
+  }, [cycles])
+
   if (cycles.length === 0) {
     return (
       <div className="card">
@@ -67,6 +82,31 @@ export default function CycleList({ cycles, onEdit, onDelete, onNew, onDuplicate
   }
 
   const cardsById = Object.fromEntries(privacyCards.map((c) => [c.id, c]))
+
+  const toggleSelected = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((c) => selected.has(c.id))
+  const toggleSelectAllFiltered = () => {
+    setSelected((prev) => {
+      if (allFilteredSelected) {
+        const next = new Set(prev)
+        filtered.forEach((c) => next.delete(c.id))
+        return next
+      }
+      const next = new Set(prev)
+      filtered.forEach((c) => next.add(c.id))
+      return next
+    })
+  }
+
+  const clearSelection = () => setSelected(new Set())
 
   return (
     <>
@@ -110,8 +150,26 @@ export default function CycleList({ cycles, onEdit, onDelete, onNew, onDuplicate
               tone={s}
             />
           ))}
+          {filtered.length > 0 && (
+            <button
+              onClick={toggleSelectAllFiltered}
+              className="ml-auto text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+            >
+              {allFilteredSelected ? 'Clear selection' : `Select ${filtered.length}`}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          onClear={clearSelection}
+          onSetStatus={(s) => { onBulkSetStatus(Array.from(selected), s); clearSelection() }}
+          onDelete={() => { onBulkDelete(Array.from(selected)); clearSelection() }}
+        />
+      )}
 
       {filtered.length === 0 ? (
         <div className="card">
@@ -136,11 +194,51 @@ export default function CycleList({ cycles, onEdit, onDelete, onNew, onDuplicate
               onEdit={() => onEdit(c)}
               onDelete={() => onDelete(c)}
               onDuplicate={() => onDuplicate?.(c)}
+              onSetStatus={(s) => onSetStatus?.(c.id, s)}
+              selected={selected.has(c.id)}
+              onToggleSelect={() => toggleSelected(c.id)}
             />
           ))}
         </div>
       )}
     </>
+  )
+}
+
+function BulkBar({ count, onClear, onSetStatus, onDelete }) {
+  const [statusOpen, setStatusOpen] = useState(false)
+  return (
+    <div className="sticky top-0 z-10 mb-4 rounded-xl border border-brand-200 dark:border-brand-500/30 bg-brand-50 dark:bg-brand-500/10 p-3 flex items-center justify-between gap-3 flex-wrap animate-slide-down">
+      <div className="text-sm font-semibold text-brand-900 dark:text-brand-200">
+        {count} selected
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative">
+          <button className="btn-secondary text-sm" onClick={() => setStatusOpen((s) => !s)}>
+            Set status <ChevronDown size={13} />
+          </button>
+          {statusOpen && (
+            <div className="absolute right-0 top-full mt-1 z-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] shadow-soft-lg overflow-hidden">
+              {CYCLE_STATUSES.map((s) => (
+                <button
+                  key={s}
+                  className="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                  onClick={() => { onSetStatus(s); setStatusOpen(false) }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button className="btn-danger text-sm" onClick={onDelete}>
+          <Trash2 size={13} /> Delete
+        </button>
+        <button className="btn-ghost text-sm" onClick={onClear}>
+          <X size={13} /> Clear
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -163,7 +261,10 @@ function FilterChip({ label, count, active, onClick, tone }) {
   )
 }
 
-function CycleCard({ cycle, card, onEdit, onDelete, onDuplicate }) {
+function CycleCard({
+  cycle, card, onEdit, onDelete, onDuplicate, onSetStatus,
+  selected, onToggleSelect,
+}) {
   const cost = totalCost(cycle)
   const expected = expectedPayout(cycle)
   const net = netProfit(cycle)
@@ -171,12 +272,26 @@ function CycleCard({ cycle, card, onEdit, onDelete, onDuplicate }) {
   const isActualDelivery = !!cycle.actualDelivery
   const deliveryDate = cycle.actualDelivery || cycle.expectedDelivery
 
+  const [statusEditOpen, setStatusEditOpen] = useState(false)
+
   return (
-    <div className="card overflow-hidden card-hover">
+    <div className={`card overflow-hidden card-hover relative ${selected ? 'ring-2 ring-brand-500' : ''}`}>
       {/* status bar */}
       <div className={`h-1 w-full ${status.bar}`} />
 
-      <div className="p-4 sm:p-5">
+      {/* selection checkbox */}
+      <button
+        onClick={onToggleSelect}
+        className={`absolute top-3 left-3 w-5 h-5 rounded-md flex items-center justify-center transition
+          ${selected
+            ? 'bg-brand-500 ring-2 ring-brand-500'
+            : 'bg-white dark:bg-slate-800 ring-1 ring-slate-300 dark:ring-white/[0.12] hover:ring-brand-400'}`}
+        aria-label={selected ? 'Deselect cycle' : 'Select cycle'}
+      >
+        {selected && <Check size={12} className="text-white" />}
+      </button>
+
+      <div className="p-4 sm:p-5 pl-10 sm:pl-11">
         {/* header row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
@@ -202,7 +317,29 @@ function CycleCard({ cycle, card, onEdit, onDelete, onDuplicate }) {
               </div>
             </div>
           </div>
-          <span className={`badge ${status.pill}`}>{status.label}</span>
+          {/* Inline status editor: click chip to choose a new status */}
+          <div className="relative shrink-0">
+            <button
+              className={`badge ${status.pill} cursor-pointer hover:opacity-80 transition`}
+              onClick={() => setStatusEditOpen((s) => !s)}
+              title="Click to change status"
+            >
+              {status.label} <ChevronDown size={10} className="opacity-70" />
+            </button>
+            {statusEditOpen && (
+              <div className="absolute right-0 top-full mt-1 z-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] shadow-soft-lg overflow-hidden min-w-[120px]">
+                {CYCLE_STATUSES.map((s) => (
+                  <button
+                    key={s}
+                    className="block w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                    onClick={() => { onSetStatus?.(s); setStatusEditOpen(false) }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* numbers */}
