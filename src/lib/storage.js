@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export const STORAGE_KEYS = {
   cycles: 'dylan_cycles',
@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
   asvab: 'dylan_asvab',
   goals: 'dylan_goals',
   settings: 'dylan_settings',
+  phoneModels: 'dylan_phone_models',
 }
 
 export function loadFromStorage(key, fallback) {

@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import {
   Sun, Moon, Trash2, Download, Upload, Truck, Check, AlertTriangle, RefreshCw,
+  Smartphone, Plus, RotateCcw,
 } from 'lucide-react'
 import Modal from './ui/Modal'
 import Confirm from './ui/Confirm'
 import { useAppData } from '../lib/AppData'
-import { STORAGE_KEYS, loadFromStorage } from '../lib/storage'
+import { STORAGE_KEYS, loadFromStorage, uid } from '../lib/storage'
+import { defaultPhoneModels } from '../lib/defaults'
 import { pingProxy } from '../lib/tracking'
 
 export default function SettingsPanel({ open, onClose }) {
-  const { settings, setSettings, resetAll } = useAppData()
+  const { settings, setSettings, resetAll, phoneModels, setPhoneModels } = useAppData()
   const [confirmReset, setConfirmReset] = useState(false)
   const [proxyDraft, setProxyDraft] = useState(settings.trackingProxyUrl || '')
   const [pingState, setPingState] = useState({ state: 'idle', message: '' })
@@ -66,6 +68,19 @@ export default function SettingsPanel({ open, onClose }) {
     }
   }
 
+  // ── Phone model CRUD ──────────────────────────────────────
+  const updateModel = (id, patch) =>
+    setPhoneModels(phoneModels.map((m) => (m.id === id ? { ...m, ...patch } : m)))
+  const removeModel = (id) =>
+    setPhoneModels(phoneModels.filter((m) => m.id !== id))
+  const addModel = () => {
+    setPhoneModels([
+      ...phoneModels,
+      { id: uid(), name: 'New model', cost: 0, mobileX: 8, tradeIn: 0 },
+    ])
+  }
+  const restoreDefaultModels = () => setPhoneModels(defaultPhoneModels())
+
   return (
     <>
       <Modal open={open} onClose={onClose} eyebrow="Settings" title="Configuration" size="lg">
@@ -97,6 +112,83 @@ export default function SettingsPanel({ open, onClose }) {
                 <Moon size={15} /> Dark
               </button>
             </div>
+          </section>
+
+          {/* Phone models */}
+          <section>
+            <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+              <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <Smartphone size={13} /> Phone models
+              </h4>
+              <div className="flex items-center gap-1">
+                <button className="btn-ghost text-[11px] !py-1.5" onClick={restoreDefaultModels} title="Restore the iPhone 16e and iPhone 13 defaults">
+                  <RotateCcw size={12} /> Restore defaults
+                </button>
+                <button className="btn-secondary text-xs !py-1.5" onClick={addModel}>
+                  <Plus size={13} /> Add model
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+              These show up in the cycle form and projector dropdown. Cost is what you
+              pay for the phone, MobileX is the per-unit fee, and trade-in is the
+              gift-card value MobileX gives you per phone.
+            </p>
+            <div className="rounded-xl border border-slate-200 dark:border-white/[0.06] overflow-hidden">
+              <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/[0.06]">
+                <div className="col-span-5 sm:col-span-4">Name</div>
+                <div className="col-span-2 sm:col-span-2 text-right">Cost</div>
+                <div className="col-span-2 sm:col-span-2 text-right">MobileX</div>
+                <div className="col-span-2 sm:col-span-3 text-right">Trade-in</div>
+                <div className="col-span-1" />
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+                {phoneModels.map((m) => (
+                  <div key={m.id} className="grid grid-cols-12 gap-2 px-3 py-2 items-center">
+                    <input
+                      className="input col-span-5 sm:col-span-4 text-sm"
+                      value={m.name}
+                      onChange={(e) => updateModel(m.id, { name: e.target.value })}
+                      placeholder="Model name"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="input col-span-2 sm:col-span-2 text-sm text-right tabular-nums"
+                      value={m.cost}
+                      onChange={(e) => updateModel(m.id, { cost: parseFloat(e.target.value || '0') })}
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="input col-span-2 sm:col-span-2 text-sm text-right tabular-nums"
+                      value={m.mobileX}
+                      onChange={(e) => updateModel(m.id, { mobileX: parseFloat(e.target.value || '0') })}
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="input col-span-2 sm:col-span-3 text-sm text-right tabular-nums"
+                      value={m.tradeIn}
+                      onChange={(e) => updateModel(m.id, { tradeIn: parseFloat(e.target.value || '0') })}
+                    />
+                    <button
+                      className="col-span-1 btn-ghost !p-1.5 hover:!text-rose-600 justify-self-end"
+                      onClick={() => removeModel(m.id)}
+                      aria-label="Delete model"
+                      disabled={phoneModels.length <= 1}
+                      title={phoneModels.length <= 1 ? 'Need at least one model' : 'Delete model'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+              Existing cycles keep their snapshotted cost/trade-in values, so renaming
+              or deleting a model won't break anything historic.
+            </p>
           </section>
 
           {/* Tracking */}

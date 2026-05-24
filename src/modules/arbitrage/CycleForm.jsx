@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ExternalLink, RefreshCw, Truck, Smartphone, Receipt, ArrowRightLeft, FileText } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
-import { CYCLE_STATUSES, PHONE_MODELS, DEFAULT_CARDCASH_RATE } from '../../lib/defaults'
+import { CYCLE_STATUSES, DEFAULT_CARDCASH_RATE, findModel } from '../../lib/defaults'
 import { fmtCurrency, expectedPayout, plusDaysISO, todayISO, totalCost, netProfit } from '../../lib/calc'
 import { useAppData } from '../../lib/AppData'
 import { CARRIERS, detectCarrier, trackingUrl } from '../../lib/tracking'
 
-const empty = () => ({
+const empty = (firstModel) => ({
   id: '',
-  model: 'iPhone 16e',
+  model: firstModel?.name || 'iPhone 16e',
   quantity: 1,
-  costPerUnit: PHONE_MODELS['iPhone 16e'].cost,
-  mobileXCost: PHONE_MODELS['iPhone 16e'].mobileX,
+  costPerUnit: firstModel?.cost ?? 171,
+  mobileXCost: firstModel?.mobileX ?? 8,
   orderDate: todayISO(),
   expectedDelivery: plusDaysISO(todayISO(), 2),
-  tradeInValue: PHONE_MODELS['iPhone 16e'].tradeIn,
+  tradeInValue: firstModel?.tradeIn ?? 310,
   cardCashRate: DEFAULT_CARDCASH_RATE,
   status: 'Ordered',
   cardCashSubmittedDate: '',
@@ -32,23 +32,26 @@ const empty = () => ({
 })
 
 export default function CycleForm({ open, onClose, onSave, initial }) {
-  const { privacyCards, settings, refreshTracking, showToast } = useAppData()
-  const [form, setForm] = useState(empty())
+  const { privacyCards, settings, refreshTracking, showToast, phoneModels } = useAppData()
+  const firstModel = phoneModels[0]
+  const [form, setForm] = useState(() => empty(firstModel))
   const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
-    if (open) setForm(initial ? { ...empty(), ...initial } : empty())
+    if (open) setForm(initial ? { ...empty(firstModel), ...initial } : empty(firstModel))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial])
 
   const update = (patch) => setForm((f) => ({ ...f, ...patch }))
 
-  const onModelChange = (model) => {
-    const m = PHONE_MODELS[model]
-    if (!m) return update({ model })
+  const onModelChange = (name) => {
+    const m = findModel(phoneModels, name)
+    if (!m) return update({ model: name })
     update({
-      model,
+      model: m.name,
       costPerUnit: m.cost,
       mobileXCost: m.mobileX,
+      tradeIn: m.tradeIn,
       tradeInValue: m.tradeIn,
     })
   }
@@ -111,6 +114,15 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
 
   const externalUrl = trackingUrl(form.trackingNumber, form.carrier || detectCarrier(form.trackingNumber))
 
+  // Show stored model name even if it's no longer in the user's list.
+  const modelOptions = useMemo(() => {
+    const names = new Set(phoneModels.map((m) => m.name))
+    if (form.model && !names.has(form.model)) {
+      return [...phoneModels, { id: 'orphan', name: form.model }]
+    }
+    return phoneModels
+  }, [phoneModels, form.model])
+
   return (
     <Modal
       open={open}
@@ -131,10 +143,13 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
           <div>
             <label className="label">Phone model</label>
             <select className="input" value={form.model} onChange={(e) => onModelChange(e.target.value)}>
-              {Object.keys(PHONE_MODELS).map((m) => (
-                <option key={m} value={m}>{m}</option>
+              {modelOptions.map((m) => (
+                <option key={m.id} value={m.name}>{m.name}</option>
               ))}
             </select>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Manage models in Settings → Phone models.
+            </p>
           </div>
           <div>
             <label className="label">Quantity</label>
@@ -298,7 +313,9 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
             <select className="input" value={form.cardId || ''} onChange={(e) => update({ cardId: e.target.value })}>
               <option value="">— none —</option>
               {privacyCards.map((c) => (
-                <option key={c.id} value={c.id}>{c.nickname}</option>
+                <option key={c.id} value={c.id}>
+                  {c.nickname}{c.last4 ? ` ····${c.last4}` : ''}
+                </option>
               ))}
             </select>
           </div>
