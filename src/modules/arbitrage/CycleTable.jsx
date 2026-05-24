@@ -1,116 +1,171 @@
 import { useState } from 'react'
-import { Pencil, Trash2, ExternalLink, RefreshCw, Truck } from 'lucide-react'
+import {
+  Pencil, Trash2, ExternalLink, RefreshCw, Truck, Smartphone,
+  ArrowRight, CalendarClock, Plus, Package,
+} from 'lucide-react'
+import EmptyState from '../../components/ui/EmptyState'
 import { fmtCurrency, fmtDateShort, expectedPayout, netProfit, totalCost } from '../../lib/calc'
 import { detectCarrier, trackingUrl, statusTone, shortStatus } from '../../lib/tracking'
 import { useAppData } from '../../lib/AppData'
 
 const STATUS_STYLES = {
-  Ordered: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
-  Shipped: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  Traded: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
-  Submitted: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  Paid: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+  Ordered:   { label: 'Ordered',   bar: 'bg-slate-400',   pill: 'bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-200 ring-1 ring-slate-200 dark:ring-white/10' },
+  Shipped:   { label: 'Shipped',   bar: 'bg-amber-500',   pill: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/20' },
+  Traded:    { label: 'Traded',    bar: 'bg-violet-500',  pill: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-500/20' },
+  Submitted: { label: 'Submitted', bar: 'bg-blue-500',    pill: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-500/20' },
+  Paid:      { label: 'Paid',      bar: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/20' },
 }
 
 const TONE_STYLES = {
-  emerald: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  brand: 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300',
-  amber: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  rose: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
-  slate: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+  emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 ring-1 ring-emerald-200/70 dark:ring-emerald-500/20',
+  brand:   'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300 ring-1 ring-brand-200/70 dark:ring-brand-500/20',
+  amber:   'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 ring-1 ring-amber-200/70 dark:ring-amber-500/20',
+  rose:    'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300 ring-1 ring-rose-200/70 dark:ring-rose-500/20',
+  slate:   'bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300 ring-1 ring-slate-200/70 dark:ring-white/10',
 }
 
-export default function CycleTable({ cycles, onEdit, onDelete, privacyCards }) {
+export default function CycleList({ cycles, onEdit, onDelete, onNew, privacyCards }) {
   if (cycles.length === 0) {
     return (
-      <div className="text-center py-10 text-slate-500 dark:text-slate-400 text-sm">
-        No cycles yet — add your first one to start tracking.
+      <div className="card">
+        <EmptyState
+          icon={Package}
+          title="No cycles yet"
+          description="Log your first iPhone arbitrage cycle to start tracking costs, payouts, and profit."
+          action={
+            <button className="btn-primary" onClick={onNew}>
+              <Plus size={15} /> New cycle
+            </button>
+          }
+        />
       </div>
     )
   }
   const cardsById = Object.fromEntries(privacyCards.map((c) => [c.id, c]))
-
   return (
-    <div className="table-wrap">
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Model</th>
-            <th>Qty</th>
-            <th>Cost/u</th>
-            <th>Trade</th>
-            <th>Rate</th>
-            <th>Order</th>
-            <th>Delivery</th>
-            <th>Tracking</th>
-            <th>Status</th>
-            <th>Card</th>
-            <th>Cost</th>
-            <th>Expected</th>
-            <th>Net</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {cycles.map((c) => {
-            const cost = totalCost(c)
-            const expected = expectedPayout(c)
-            const net = netProfit(c)
-            const deliveryDate = c.actualDelivery || c.expectedDelivery
-            const isActualDelivery = !!c.actualDelivery
-            return (
-              <tr key={c.id}>
-                <td className="font-medium">{c.model}</td>
-                <td className="tabular-nums">{c.quantity}</td>
-                <td className="tabular-nums">{fmtCurrency(c.costPerUnit)}</td>
-                <td className="tabular-nums">{fmtCurrency(c.tradeInValue)}</td>
-                <td className="tabular-nums">{(Number(c.cardCashRate) * 100).toFixed(0)}%</td>
-                <td>{fmtDateShort(c.orderDate)}</td>
-                <td>
-                  <span className={isActualDelivery ? 'text-emerald-600 dark:text-emerald-400 font-medium' : ''}>
-                    {fmtDateShort(deliveryDate)}
-                  </span>
-                  {isActualDelivery && <span className="ml-1 text-[10px] text-emerald-600 dark:text-emerald-400">✓</span>}
-                </td>
-                <td>
-                  <TrackingCell cycle={c} />
-                </td>
-                <td>
-                  <span className={`badge ${STATUS_STYLES[c.status] || STATUS_STYLES.Ordered}`}>{c.status}</span>
-                </td>
-                <td className="text-xs text-slate-500 dark:text-slate-400">
-                  {c.cardId ? (cardsById[c.cardId]?.nickname || '—') : '—'}
-                </td>
-                <td className="tabular-nums">{fmtCurrency(cost)}</td>
-                <td className="tabular-nums">{fmtCurrency(expected)}</td>
-                <td className={`tabular-nums font-medium ${net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {fmtCurrency(net)}
-                </td>
-                <td>
-                  <div className="flex items-center gap-1 justify-end">
-                    <button className="btn-ghost !p-1.5" onClick={() => onEdit(c)} aria-label="Edit">
-                      <Pencil size={15} />
-                    </button>
-                    <button className="btn-ghost !p-1.5 hover:!text-rose-600" onClick={() => onDelete(c)} aria-label="Delete">
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+      {cycles.map((c) => (
+        <CycleCard
+          key={c.id}
+          cycle={c}
+          card={c.cardId ? cardsById[c.cardId] : null}
+          onEdit={() => onEdit(c)}
+          onDelete={() => onDelete(c)}
+        />
+      ))}
     </div>
   )
 }
 
-function TrackingCell({ cycle }) {
+function CycleCard({ cycle, card, onEdit, onDelete }) {
+  const cost = totalCost(cycle)
+  const expected = expectedPayout(cycle)
+  const net = netProfit(cycle)
+  const status = STATUS_STYLES[cycle.status] || STATUS_STYLES.Ordered
+  const isActualDelivery = !!cycle.actualDelivery
+  const deliveryDate = cycle.actualDelivery || cycle.expectedDelivery
+
+  return (
+    <div className="card overflow-hidden card-hover">
+      {/* status bar */}
+      <div className={`h-1 w-full ${status.bar}`} />
+
+      <div className="p-4 sm:p-5">
+        {/* header row */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="icon-tile bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 shrink-0">
+              <Smartphone size={16} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-semibold text-slate-900 dark:text-white text-[15px] truncate">
+                  {cycle.model}
+                </h4>
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  × {cycle.quantity}
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                <CalendarClock size={11} />
+                {fmtDateShort(cycle.orderDate)}
+                <ArrowRight size={11} />
+                <span className={isActualDelivery ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>
+                  {fmtDateShort(deliveryDate)}{isActualDelivery && ' ✓'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <span className={`badge ${status.pill}`}>{status.label}</span>
+        </div>
+
+        {/* numbers */}
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <NumTile label="Cost" value={fmtCurrency(cost)} />
+          <NumTile label="Expected" value={fmtCurrency(expected)} />
+          <NumTile
+            label="Net"
+            value={fmtCurrency(net)}
+            tone={net >= 0 ? 'emerald' : 'rose'}
+          />
+        </div>
+
+        {/* meta line */}
+        <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+          <span>
+            Trade {fmtCurrency(cycle.tradeInValue)} · CC {(Number(cycle.cardCashRate) * 100).toFixed(0)}%
+          </span>
+          {card && <span className="truncate ml-2">💳 {card.nickname}</span>}
+        </div>
+
+        {/* tracking */}
+        <TrackingRow cycle={cycle} />
+
+        {/* actions */}
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+          <span className="text-[11px] text-slate-400 dark:text-slate-500">
+            {cycle.notes ? '📝 Has notes' : ' '}
+          </span>
+          <div className="flex items-center gap-1">
+            <button className="btn-ghost !p-1.5" onClick={onEdit} aria-label="Edit cycle">
+              <Pencil size={14} />
+            </button>
+            <button className="btn-ghost !p-1.5 hover:!text-rose-600" onClick={onDelete} aria-label="Delete cycle">
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NumTile({ label, value, tone = 'slate' }) {
+  const tones = {
+    slate: 'bg-slate-50 dark:bg-white/[0.03] text-slate-900 dark:text-white',
+    emerald: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+    rose: 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  }
+  return (
+    <div className={`rounded-lg px-2 py-2.5 ${tones[tone] || tones.slate}`}>
+      <div className="text-[10px] uppercase tracking-wider font-semibold opacity-70">{label}</div>
+      <div className="text-[15px] font-bold tabular-nums mt-0.5 truncate">{value}</div>
+    </div>
+  )
+}
+
+function TrackingRow({ cycle }) {
   const { settings, refreshTracking, showToast } = useAppData()
   const [busy, setBusy] = useState(false)
 
   if (!cycle.trackingNumber) {
-    return <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
+    return (
+      <div className="mt-3 rounded-lg border border-dashed border-slate-200 dark:border-white/[0.06]
+                      px-3 py-2.5 text-[12px] text-slate-400 dark:text-slate-500
+                      flex items-center gap-2">
+        <Truck size={13} /> No tracking number
+      </div>
+    )
   }
 
   const carrier = cycle.carrier || detectCarrier(cycle.trackingNumber)
@@ -143,30 +198,43 @@ function TrackingCell({ cycle }) {
   }
 
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      <Truck size={14} className="text-slate-400 dark:text-slate-500 shrink-0" />
-      <div className="min-w-0">
-        <div className="font-mono text-[11px] truncate max-w-[140px]" title={cycle.trackingNumber}>
-          {cycle.trackingNumber}
+    <div className="mt-3 rounded-xl bg-slate-50 dark:bg-white/[0.03]
+                    border border-slate-200/70 dark:border-white/[0.05]
+                    px-3 py-2.5">
+      <div className="flex items-center gap-2">
+        <Truck size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
+              {carrier}
+            </span>
+            {label && <span className={`badge ${TONE_STYLES[tone] || TONE_STYLES.slate}`}>{label}</span>}
+          </div>
+          <div className="font-mono text-[11px] text-slate-700 dark:text-slate-300 truncate" title={cycle.trackingNumber}>
+            {cycle.trackingNumber}
+          </div>
         </div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-[10px] text-slate-500 dark:text-slate-400">{carrier}</span>
-          {label && <span className={`badge text-[10px] ${TONE_STYLES[tone] || TONE_STYLES.slate}`}>{label}</span>}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-ghost !p-1.5"
+            aria-label={`Open in ${carrier} site`}
+            title={`Open in ${carrier} tracking`}
+          >
+            <ExternalLink size={13} />
+          </a>
+          <button
+            onClick={handleRefresh}
+            disabled={busy}
+            className="btn-ghost !p-1.5"
+            aria-label="Refresh tracking"
+            title={settings.trackingProxyUrl ? 'Refresh live status' : 'Configure proxy URL in Settings'}
+          >
+            <RefreshCw size={13} className={busy ? 'animate-spin' : ''} />
+          </button>
         </div>
-      </div>
-      <div className="flex items-center gap-0.5 ml-auto">
-        <a href={url} target="_blank" rel="noreferrer" className="btn-ghost !p-1" aria-label="Open in carrier site">
-          <ExternalLink size={13} />
-        </a>
-        <button
-          onClick={handleRefresh}
-          disabled={busy}
-          className="btn-ghost !p-1"
-          aria-label="Refresh tracking"
-          title={settings.trackingProxyUrl ? 'Refresh live status' : 'Configure proxy URL in Settings'}
-        >
-          <RefreshCw size={13} className={busy ? 'animate-spin' : ''} />
-        </button>
       </div>
     </div>
   )

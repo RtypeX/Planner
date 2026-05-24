@@ -7,81 +7,178 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
   body {
-    @apply font-sans bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+    @apply font-sans text-slate-800 dark:text-slate-100;
+    background-color: #f6f7fb;
+    background-image:
+      radial-gradient(1200px 600px at 90% -10%, rgba(59, 102, 255, 0.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(139, 92, 246, 0.05), transparent 60%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
+
+  .dark body {
+    color-scheme: dark;
+    background-color: #06080f;
+    background-image:
+      radial-gradient(1200px 700px at 85% -10%, rgba(59, 102, 255, 0.12), transparent 60%),
+      radial-gradient(1000px 600px at -10% 20%, rgba(168, 85, 247, 0.07), transparent 60%);
+  }
+
   input, select, textarea, button {
     font-family: inherit;
   }
-  /* Number inputs: hide spinners */
+
   input[type=number]::-webkit-outer-spin-button,
   input[type=number]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
   input[type=number] { -moz-appearance: textfield; }
+
+  ::selection {
+    background-color: rgba(59, 102, 255, 0.25);
+  }
 }
 
 @layer components {
+  /* Surface primitives ------------------------------------------------- */
   .card {
-    @apply rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm;
+    @apply rounded-2xl bg-white/95 dark:bg-slate-900/70 backdrop-blur
+           border border-slate-200/80 dark:border-white/[0.06]
+           shadow-soft;
   }
   .card-padded { @apply card p-4 sm:p-5; }
+  .card-hover  { @apply transition-shadow hover:shadow-soft-lg; }
 
+  .card-hero {
+    @apply rounded-2xl text-white relative overflow-hidden
+           bg-gradient-to-br from-brand-500 via-brand-600 to-indigo-700
+           shadow-glow-brand ring-1 ring-white/10;
+  }
+  .card-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(600px 200px at 100% 0%, rgba(255,255,255,0.18), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Form primitives ---------------------------------------------------- */
   .input {
-    @apply w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent;
+    @apply w-full rounded-lg border border-slate-200 dark:border-white/10
+           bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100
+           px-3 py-2 text-sm transition
+           focus:outline-none focus:ring-2 focus:ring-brand-500/60 focus:border-brand-400
+           placeholder:text-slate-400 dark:placeholder:text-slate-500;
   }
   .label {
-    @apply block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1;
+    @apply block text-[11px] font-semibold uppercase tracking-wider
+           text-slate-500 dark:text-slate-400 mb-1.5;
   }
+
+  /* Buttons ------------------------------------------------------------ */
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-1.5
+           rounded-lg px-3 py-2 text-sm font-medium transition-all
+           disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-[0.98];
   }
   .btn-primary {
-    @apply btn bg-brand-600 hover:bg-brand-700 text-white;
+    @apply btn bg-gradient-to-b from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-600
+           text-white shadow-soft hover:shadow-glow-brand;
   }
   .btn-secondary {
-    @apply btn bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100;
+    @apply btn bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/80
+           text-slate-700 dark:text-slate-100
+           border border-slate-200 dark:border-white/10 shadow-soft;
   }
   .btn-ghost {
-    @apply btn text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800;
+    @apply btn text-slate-600 dark:text-slate-300
+           hover:bg-slate-100 dark:hover:bg-white/[0.06];
   }
   .btn-danger {
-    @apply btn bg-rose-600 hover:bg-rose-700 text-white;
+    @apply btn bg-rose-600 hover:bg-rose-500 text-white shadow-soft;
   }
+
+  /* Pills / badges ----------------------------------------------------- */
   .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5
+           text-[11px] font-semibold tracking-wide;
   }
-  .stat-label { @apply text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-medium; }
-  .stat-value { @apply text-2xl font-bold text-slate-900 dark:text-white tabular-nums; }
+
+  /* Stat typography ---------------------------------------------------- */
+  .stat-label {
+    @apply text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold;
+  }
+  .stat-value {
+    @apply text-[28px] leading-tight font-extrabold text-slate-900 dark:text-white tabular-nums tracking-tight;
+  }
+
+  /* Table primitives --------------------------------------------------- */
   .table-wrap { @apply overflow-x-auto -mx-4 sm:mx-0; }
-  .table {
-    @apply min-w-full text-sm;
-  }
+  .table { @apply min-w-full text-sm; }
   .table thead th {
-    @apply text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 px-3 py-2 border-b border-slate-200 dark:border-slate-800 whitespace-nowrap;
+    @apply text-left text-[10px] font-semibold uppercase tracking-wider
+           text-slate-500 dark:text-slate-400 px-3 py-2.5
+           border-b border-slate-200 dark:border-white/[0.06] whitespace-nowrap;
   }
   .table tbody td {
-    @apply px-3 py-2 border-b border-slate-100 dark:border-slate-800/60 whitespace-nowrap;
+    @apply px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.04] whitespace-nowrap;
   }
   .table tbody tr:hover {
-    @apply bg-slate-50 dark:bg-slate-800/40;
+    @apply bg-slate-50 dark:bg-white/[0.03];
   }
+
+  /* Progress ----------------------------------------------------------- */
   .progress {
-    @apply h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden;
+    @apply h-2 w-full rounded-full bg-slate-200 dark:bg-white/[0.07] overflow-hidden;
   }
   .progress-bar {
-    @apply h-full rounded-full transition-all;
+    @apply h-full rounded-full transition-all duration-500;
   }
+
+  /* Section header pattern -------------------------------------------- */
   .section-title {
-    @apply text-lg sm:text-xl font-bold text-slate-900 dark:text-white;
+    @apply text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight;
   }
   .section-sub {
-    @apply text-sm text-slate-500 dark:text-slate-400;
+    @apply text-[13px] text-slate-500 dark:text-slate-400;
+  }
+
+  /* Decorative divider ------------------------------------------------- */
+  .divider {
+    @apply h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-white/[0.06] to-transparent my-4;
+  }
+
+  /* Page chrome -------------------------------------------------------- */
+  .page-eyebrow {
+    @apply inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em]
+           text-brand-700 dark:text-brand-300;
+  }
+  .page-eyebrow::before {
+    content: '';
+    @apply inline-block w-6 h-px bg-current opacity-60;
+  }
+
+  /* Soft icon tile ----------------------------------------------------- */
+  .icon-tile {
+    @apply rounded-xl p-2 inline-flex items-center justify-center;
   }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { @apply bg-slate-300 dark:bg-slate-700 rounded-full; }
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300/70 dark:bg-white/[0.08] rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-white/[0.16];
+}
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* Recharts dark-mode tweaks */
+.recharts-default-tooltip {
+  border-radius: 12px !important;
+  border: none !important;
+}

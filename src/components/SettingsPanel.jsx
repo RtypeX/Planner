@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Sun, Moon, Trash2, Download, Upload, Truck, Check, AlertTriangle, RefreshCw } from 'lucide-react'
+import {
+  Sun, Moon, Trash2, Download, Upload, Truck, Check, AlertTriangle, RefreshCw,
+} from 'lucide-react'
 import Modal from './ui/Modal'
 import Confirm from './ui/Confirm'
 import { useAppData } from '../lib/AppData'
@@ -11,11 +13,6 @@ export default function SettingsPanel({ open, onClose }) {
   const [confirmReset, setConfirmReset] = useState(false)
   const [proxyDraft, setProxyDraft] = useState(settings.trackingProxyUrl || '')
   const [pingState, setPingState] = useState({ state: 'idle', message: '' })
-
-  // Keep draft in sync if settings change externally (e.g., import)
-  if (proxyDraft !== (settings.trackingProxyUrl || '') && pingState.state === 'idle') {
-    // No-op; user is editing. We only sync from external source on first open.
-  }
 
   const exportData = () => {
     const dump = {}
@@ -71,43 +68,47 @@ export default function SettingsPanel({ open, onClose }) {
 
   return (
     <>
-      <Modal open={open} onClose={onClose} title="Settings" size="lg">
-        <div className="space-y-6">
+      <Modal open={open} onClose={onClose} eyebrow="Settings" title="Configuration" size="lg">
+        <div className="space-y-7">
+          {/* Theme */}
           <section>
-            <h4 className="font-semibold text-sm mb-3">Appearance</h4>
-            <div className="grid grid-cols-2 gap-2">
+            <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-700 dark:text-slate-200 mb-3">
+              Appearance
+            </h4>
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-white/[0.04]">
               <button
                 onClick={() => setSettings({ ...settings, theme: 'light' })}
-                className={`btn justify-center py-3 ${
+                className={`btn justify-center py-2.5 transition ${
                   settings.theme === 'light'
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    ? 'bg-white dark:bg-slate-900 shadow-soft text-slate-900 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <Sun size={16} /> Light
+                <Sun size={15} /> Light
               </button>
               <button
                 onClick={() => setSettings({ ...settings, theme: 'dark' })}
-                className={`btn justify-center py-3 ${
+                className={`btn justify-center py-2.5 transition ${
                   settings.theme === 'dark'
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    ? 'bg-white dark:bg-slate-900 shadow-soft text-slate-900 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <Moon size={16} /> Dark
+                <Moon size={15} /> Dark
               </button>
             </div>
           </section>
 
+          {/* Tracking */}
           <section>
-            <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
-              <Truck size={15} /> Tracking API
+            <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
+              <Truck size={13} /> Tracking API
             </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-              Live UPS/USPS/FedEx status requires a small proxy you deploy yourself
-              (browsers can't call UPS directly). See <code>/worker</code> in the repo
-              for a Cloudflare Worker template you can deploy in under 5 minutes.
-              Without this, the Track button still opens the public carrier page.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+              Live UPS/USPS/FedEx status requires a small proxy you deploy yourself —
+              browsers can't call UPS directly. See <code className="text-brand-600 dark:text-brand-400">/worker</code> for a
+              Cloudflare Worker template you can deploy in under 5 minutes. Without
+              it, the Track button still opens the public carrier page.
             </p>
             <label className="label">Proxy URL</label>
             <div className="flex gap-2">
@@ -137,19 +138,22 @@ export default function SettingsPanel({ open, onClose }) {
             )}
             {settings.trackingProxyUrl && (
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
-                Currently using: <code className="break-all">{settings.trackingProxyUrl}</code>
+                Active: <code className="break-all">{settings.trackingProxyUrl}</code>
               </p>
             )}
           </section>
 
+          {/* Backup */}
           <section>
-            <h4 className="font-semibold text-sm mb-3">Backup</h4>
+            <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-700 dark:text-slate-200 mb-3">
+              Backup
+            </h4>
             <div className="grid grid-cols-2 gap-2">
               <button className="btn-secondary justify-center" onClick={exportData}>
-                <Download size={16} /> Export JSON
+                <Download size={15} /> Export JSON
               </button>
               <label className="btn-secondary justify-center cursor-pointer">
-                <Upload size={16} /> Import JSON
+                <Upload size={15} /> Import JSON
                 <input type="file" accept="application/json" onChange={importData} className="hidden" />
               </label>
             </div>
@@ -158,10 +162,13 @@ export default function SettingsPanel({ open, onClose }) {
             </p>
           </section>
 
+          {/* Danger zone */}
           <section>
-            <h4 className="font-semibold text-sm mb-3 text-rose-600 dark:text-rose-400">Danger Zone</h4>
+            <h4 className="text-[11px] uppercase tracking-wider font-bold text-rose-600 dark:text-rose-400 mb-3">
+              Danger zone
+            </h4>
             <button className="btn-danger w-full justify-center" onClick={() => setConfirmReset(true)}>
-              <Trash2 size={16} /> Reset all data
+              <Trash2 size={15} /> Reset all data
             </button>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               Wipes every <code>dylan_*</code> key from localStorage and reloads defaults.
