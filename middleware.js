@@ -1,14 +1,15 @@
-// Vercel Edge Middleware — gates the entire app behind a password.
+// Vercel Edge Middleware — gates the entire app behind password + PIN.
 //
 // Runs at the edge before any HTML/JS is served. The static bundle is never
 // reachable until the user has a valid signed session cookie.
 //
-// Required env vars (set in Vercel project → Settings → Environment Variables):
+// Required env vars (Vercel project → Settings → Environment Variables):
 //   AUTH_PASSWORD_HASH  format "<salt_hex>:<hash_hex>" — generate with `npm run hash-password`
-//   AUTH_SECRET         random 64-char hex string — generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+//   AUTH_PIN_HASH       format "<salt_hex>:<hash_hex>" — generate with `npm run hash-pin`
+//   AUTH_SECRET         random 64-char hex — generate with `npm run hash-password`
 //
-// If either is missing, middleware passes through (so local dev / preview
-// without env vars still works). For production set both.
+// If any are missing, middleware passes through (so local dev / preview
+// without env vars still works). For production set all three.
 
 export const config = {
   matcher: '/((?!__auth/|favicon\\.svg|manifest\\.webmanifest|sw\\.js).*)',
@@ -19,32 +20,26 @@ const SESSION_DAYS = 7
 const PBKDF2_ITERATIONS = 100_000
 
 const AUTH_PASSWORD_HASH = process.env.AUTH_PASSWORD_HASH || ''
-const AUTH_SECRET = process.env.AUTH_SECRET || ''
+const AUTH_PIN_HASH      = process.env.AUTH_PIN_HASH || ''
+const AUTH_SECRET        = process.env.AUTH_SECRET || ''
 
 const enc = new TextEncoder()
-const dec = new TextDecoder()
 
 export default async function middleware(request) {
   // Bypass entirely if not configured (local dev safety)
-  if (!AUTH_PASSWORD_HASH || !AUTH_SECRET) return
+  if (!AUTH_PASSWORD_HASH || !AUTH_PIN_HASH || !AUTH_SECRET) return
 
   const url = new URL(request.url)
   const path = url.pathname
 
-  // Login POST handler
-  if (path === '/__auth/login' && request.method === 'POST') {
-    return handleLogin(request)
-  }
-  // Logout handler
-  if (path === '/__auth/logout') {
-    return handleLogout()
-  }
+  if (path === '/__auth/login' && request.method === 'POST') return handleLogin(request)
+  if (path === '/__auth/logout') return handleLogout()
 
   // Already authenticated? Pass through.
   const cookie = readCookie(request.headers.get('cookie') || '', COOKIE_NAME)
   if (cookie && await verifySession(cookie)) return
 
-  // Otherwise serve the login page (no app code reaches the browser).
+  // Otherwise serve the login page.
   return new Response(loginHtml(url.searchParams.get('error')), {
     status: 401,
     headers: {
@@ -58,12 +53,19 @@ export default async function middleware(request) {
 
 async function handleLogin(request) {
   const form = await request.formData().catch(() => null)
-  const password = form?.get('password')?.toString() || ''
+  const password = (form?.get('password') || '').toString()
+  const pin = (form?.get('pin') || '').toString().replace(/\D/g, '').slice(0, 6)
 
-  const ok = password ? await verifyPassword(password) : false
-  if (!ok) {
-    // Add a small artificial delay to throttle online guessing further.
-    await sleep(400)
+  // Verify both in parallel — total time is one PBKDF2, not two.
+  // Final result is gated by AND so an attacker can't tell which failed.
+  const [passwordOk, pinOk] = await Promise.all([
+    password ? verifyHashed(password, AUTH_PASSWORD_HASH) : Promise.resolve(false),
+    pin ? verifyHashed(pin, AUTH_PIN_HASH) : Promise.resolve(false),
+  ])
+
+  if (!passwordOk || !pinOk) {
+    // Artificial delay throttles online guessing.
+    await sleep(500)
     return redirect('/?error=invalid')
   }
 
@@ -89,11 +91,11 @@ function redirect(location) {
 
 // ─── Crypto ──────────────────────────────────────────────────────────
 
-async function verifyPassword(password) {
-  const [saltHex, expectedHex] = AUTH_PASSWORD_HASH.split(':')
+async function verifyHashed(input, stored) {
+  const [saltHex, expectedHex] = (stored || '').split(':')
   if (!saltHex || !expectedHex) return false
   const salt = hexToBytes(saltHex)
-  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits'])
+  const key = await crypto.subtle.importKey('raw', enc.encode(input), 'PBKDF2', false, ['deriveBits'])
   const bits = await crypto.subtle.deriveBits(
     { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
     key,
@@ -175,14 +177,12 @@ function base64UrlDecode(str) {
   return atob(padded)
 }
 
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms))
-}
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)) }
 
 // ─── Login page ──────────────────────────────────────────────────────
 
 function loginHtml(error) {
-  const errorMsg = error === 'invalid' ? 'wrong password.' : ''
+  const errorMsg = error === 'invalid' ? 'wrong password or pin.' : ''
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -213,10 +213,7 @@ function loginHtml(error) {
     justify-content: center;
     padding: 24px;
   }
-  .card {
-    width: 100%;
-    max-width: 360px;
-  }
+  .card { width: 100%; max-width: 360px; }
   .lockup {
     display: flex;
     align-items: baseline;
@@ -255,7 +252,8 @@ function loginHtml(error) {
     text-transform: uppercase;
     margin-bottom: 8px;
   }
-  input[type=password] {
+  .field { margin-bottom: 24px; }
+  input[type=password], input[type=text] {
     width: 100%;
     background: transparent;
     border: none;
@@ -267,11 +265,16 @@ function loginHtml(error) {
     outline: none;
     transition: border-color 200ms;
   }
-  input[type=password]:focus {
+  input[type=password]:focus, input[type=text]:focus {
     border-bottom-color: #cf7726;
   }
+  input.pin {
+    letter-spacing: 0.5em;
+    text-align: center;
+    font-size: 18px;
+  }
   button {
-    margin-top: 28px;
+    margin-top: 8px;
     width: 100%;
     background: #f5f1e8;
     color: #0a0908;
@@ -290,7 +293,8 @@ function loginHtml(error) {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
     color: #d97757;
-    margin-top: 16px;
+    margin-top: 4px;
+    margin-bottom: 16px;
     min-height: 18px;
   }
   .meta {
@@ -314,15 +318,36 @@ function loginHtml(error) {
         <div class="sub">Restricted</div>
       </div>
     </div>
-    <form method="POST" action="/__auth/login">
-      <label for="pw">Password</label>
-      <input id="pw" name="password" type="password" autofocus autocomplete="current-password" required>
+    <form method="POST" action="/__auth/login" autocomplete="off">
+      <div class="field">
+        <label for="pw">Password</label>
+        <input id="pw" name="password" type="password" autofocus autocomplete="current-password" required>
+      </div>
+      <div class="field">
+        <label for="pin">PIN · 6 digits</label>
+        <input id="pin" name="pin" type="text" class="pin" inputmode="numeric" autocomplete="off" pattern="[0-9]{6}" maxlength="6" required>
+      </div>
       <div class="err">${errorMsg}</div>
       <button type="submit">Unlock</button>
     </form>
-    <div class="meta">Single user · Cookie expires after ${SESSION_DAYS} days</div>
+    <div class="meta">Two-factor · Session expires after ${SESSION_DAYS} days</div>
   </div>
 </div>
+<script>
+  // Auto-advance to PIN field when password is filled and Enter is pressed,
+  // and submit when PIN reaches 6 digits.
+  const pw = document.getElementById('pw');
+  const pin = document.getElementById('pin');
+  pw.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && pw.value && !pin.value) {
+      e.preventDefault();
+      pin.focus();
+    }
+  });
+  pin.addEventListener('input', () => {
+    pin.value = pin.value.replace(/\\D/g, '').slice(0, 6);
+  });
+</script>
 </body>
 </html>`
 }
