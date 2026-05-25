@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Sun, Moon, Trash2, Download, Upload, Truck, Check, AlertTriangle, RefreshCw,
-  Smartphone, Plus, RotateCcw,
+  Smartphone, Plus, RotateCcw, Lock,
 } from 'lucide-react'
 import Modal from './ui/Modal'
 import Confirm from './ui/Confirm'
@@ -9,6 +9,7 @@ import { useAppData } from '../lib/AppData'
 import { STORAGE_KEYS, loadFromStorage, uid } from '../lib/storage'
 import { defaultPhoneModels } from '../lib/defaults'
 import { pingProxy } from '../lib/tracking'
+import { GEMINI_MODELS, DEFAULT_MODEL } from '../lib/gemini'
 
 export default function SettingsPanel({ open, onClose }) {
   const { settings, setSettings, resetAll, phoneModels, setPhoneModels, markBackedUp, meta } = useAppData()
@@ -199,9 +200,11 @@ export default function SettingsPanel({ open, onClose }) {
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
               Live UPS/USPS/FedEx status requires a small proxy you deploy yourself —
-              browsers can't call UPS directly. See <code className="text-brand-600 dark:text-brand-400">/worker</code> for a
-              Cloudflare Worker template you can deploy in under 5 minutes. Without
-              it, the Track button still opens the public carrier page.
+              browsers can't call the carriers directly. The bundled proxy uses
+              <a href="https://www.trackingmore.com/" target="_blank" rel="noreferrer" className="text-brand-600 dark:text-brand-400 underline mx-1">TrackingMore</a>
+              (one key covers 1,200+ carriers). See{' '}
+              <code className="text-brand-600 dark:text-brand-400">/worker</code> for setup —
+              about 5 minutes. Without it, the Track button still opens the public carrier page.
             </p>
             <label className="label">Proxy URL</label>
             <div className="flex gap-2">
@@ -242,8 +245,7 @@ export default function SettingsPanel({ open, onClose }) {
               <Smartphone size={13} /> Gemini AI
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
-              Used by the Sheets Import feature to parse pasted spreadsheet data into cycles.
-              Get a free key at{' '}
+              Powers the AI assistant, weekly summaries, and Sheets import. Get a free key at{' '}
               <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-brand-600 dark:text-brand-400 underline">
                 aistudio.google.com/apikey
               </a>.
@@ -256,6 +258,29 @@ export default function SettingsPanel({ open, onClose }) {
               value={settings.geminiApiKey || ''}
               onChange={(e) => setSettings({ ...settings, geminiApiKey: e.target.value.trim() })}
             />
+            <label className="label mt-3">Model</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {GEMINI_MODELS.map((m) => {
+                const active = (settings.geminiModel || DEFAULT_MODEL) === m.id
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setSettings({ ...settings, geminiModel: m.id })}
+                    className={`text-left rounded-xl border p-2.5 transition
+                      ${active
+                        ? 'border-brand-400 bg-brand-50 dark:bg-brand-500/10 dark:border-brand-500/40'
+                        : 'border-[var(--border-1)] hover:border-brand-300 dark:hover:border-brand-500/30'}`}
+                  >
+                    <div className="text-sm font-bold text-slate-900 dark:text-white">{m.label}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{m.sub}</div>
+                    <div className="text-[10px] font-mono text-slate-400 mt-1">{m.id}</div>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+              Hitting 429 errors? Switch to a Flash Lite model — they have much higher free quotas.
+            </p>
           </section>
 
           {/* Backup */}
@@ -287,6 +312,9 @@ export default function SettingsPanel({ open, onClose }) {
             <h4 className="text-[11px] uppercase tracking-wider font-bold text-rose-600 dark:text-rose-400 mb-3">
               Danger zone
             </h4>
+            <a href="/__auth/logout" className="btn-secondary w-full justify-center mb-2 no-underline">
+              <Lock size={15} /> Sign out
+            </a>
             <button className="btn-danger w-full justify-center" onClick={() => setConfirmReset(true)}>
               <Trash2 size={15} /> Reset all data
             </button>

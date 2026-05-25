@@ -9,29 +9,19 @@ export default function Modal({ open, onClose, title, eyebrow, children, footer,
 
   useEffect(() => {
     if (!open) return
-
-    // Save the element that had focus before the modal opened so we can
-    // restore it on close — important for keyboard / screen-reader users.
     previouslyFocusedRef.current = document.activeElement
 
     const onKey = (e) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation()
-        onClose?.()
-        return
-      }
+      if (e.key === 'Escape') { e.stopPropagation(); onClose?.(); return }
       if (e.key === 'Tab' && dialogRef.current) {
-        // Focus trap: cycle Tab focus inside the dialog.
         const focusables = dialogRef.current.querySelectorAll(FOCUSABLE)
         if (focusables.length === 0) return
         const first = focusables[0]
         const last = focusables[focusables.length - 1]
         if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
+          e.preventDefault(); last.focus()
         } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
+          e.preventDefault(); first.focus()
         }
       }
     }
@@ -39,7 +29,6 @@ export default function Modal({ open, onClose, title, eyebrow, children, footer,
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
 
-    // Focus the first focusable element after the dialog mounts.
     requestAnimationFrame(() => {
       const focusable = dialogRef.current?.querySelector(FOCUSABLE)
       focusable?.focus()
@@ -48,7 +37,6 @@ export default function Modal({ open, onClose, title, eyebrow, children, footer,
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
-      // Restore focus to whatever opened the modal.
       const el = previouslyFocusedRef.current
       if (el && typeof el.focus === 'function') {
         try { el.focus() } catch { /* element may be gone */ }
@@ -57,12 +45,7 @@ export default function Modal({ open, onClose, title, eyebrow, children, footer,
   }, [open, onClose])
 
   if (!open) return null
-  const widths = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-  }
+  const widths = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' }
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
@@ -70,36 +53,34 @@ export default function Modal({ open, onClose, title, eyebrow, children, footer,
       aria-modal="true"
       aria-label={title}
     >
-      <div
-        className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
+      <div className="fixed inset-0 bg-[var(--ink-1)]/40" onClick={onClose} aria-hidden />
       <div
         ref={dialogRef}
         className={`relative w-full ${widths[size] || widths.md} max-h-[92vh] overflow-y-auto
-                    rounded-t-2xl sm:rounded-2xl
-                    bg-white dark:bg-slate-900
-                    border border-slate-200/80 dark:border-white/[0.06]
-                    shadow-2xl shadow-slate-950/20 dark:shadow-black/40
+                    bg-[var(--paper-1)]
+                    border border-[var(--rule-strong)]
+                    shadow-soft-lg
                     animate-slide-up`}
       >
-        <div className="flex items-start justify-between gap-4 px-5 sm:px-6 py-4
-                        border-b border-slate-200/70 dark:border-white/[0.06]
-                        sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10">
+        <div className="flex items-start justify-between gap-4 px-6 py-5
+                        border-b border-[var(--rule)]
+                        sticky top-0 bg-[var(--paper-1)] z-10">
           <div className="min-w-0">
             {eyebrow && <div className="page-eyebrow">{eyebrow}</div>}
-            <h3 className="font-semibold text-base sm:text-lg text-slate-900 dark:text-white truncate">{title}</h3>
+            <h3 className="font-display text-lg sm:text-xl text-[var(--ink-1)] truncate mt-1.5"
+                style={{ fontWeight: 500, letterSpacing: '-0.02em' }}>
+              {title}
+            </h3>
           </div>
-          <button className="btn-ghost !p-1.5 -mr-1.5" onClick={onClose} aria-label="Close">
-            <X size={18} />
+          <button className="btn btn-ghost btn-icon -mr-2 -mt-1" onClick={onClose} aria-label="Close">
+            <X size={16} strokeWidth={1.5} />
           </button>
         </div>
-        <div className="p-5 sm:p-6">{children}</div>
+        <div className="p-6">{children}</div>
         {footer && (
-          <div className="px-5 sm:px-6 py-4 border-t border-slate-200/70 dark:border-white/[0.06]
+          <div className="px-6 py-4 border-t border-[var(--rule)]
                           flex justify-end gap-2 sticky bottom-0
-                          bg-white/95 dark:bg-slate-900/95 backdrop-blur">
+                          bg-[var(--paper-1)]">
             {footer}
           </div>
         )}

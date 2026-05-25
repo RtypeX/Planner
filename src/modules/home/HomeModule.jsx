@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
-  Home, Plus, Sparkles, ArrowRight, Wallet, TrendingUp, Trophy, Truck,
-  Dumbbell, Map as MapIcon, Activity, Flame, Target, Calendar,
+  Plus, ArrowRight, Wallet, TrendingUp, Trophy, Truck,
+  Dumbbell, Activity, Flame, Target, Calendar, Sparkles,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import StatCard from '../../components/ui/StatCard'
@@ -22,9 +22,7 @@ import BackupReminder from '../../components/BackupReminder'
 import WeeklySummary from '../../components/WeeklySummary'
 
 export default function HomeModule({ goTo, onOpenAssistant }) {
-  const {
-    cycles, setCycles, balance, workouts, milestones, fitnessBaselines,
-  } = useAppData()
+  const { cycles, setCycles, balance, workouts, milestones, fitnessBaselines } = useAppData()
   const [editingCycle, setEditingCycle] = useState(null)
 
   const profit = totalAllTimeProfit(cycles)
@@ -40,15 +38,12 @@ export default function HomeModule({ goTo, onOpenAssistant }) {
   const upNext = getNextMilestones(milestones, 3)
   const week = getWeekStats(cycles, workouts)
 
-  // BMT readiness
   const runScore = fitnessBaselines.runSeconds
     ? Math.min(100, (BMT_TARGETS.runSeconds / fitnessBaselines.runSeconds) * 100) : 0
   const pushScore = Math.min(100, ((fitnessBaselines.pushups || 0) / BMT_TARGETS.pushupsGoal) * 100)
   const sitScore = Math.min(100, ((fitnessBaselines.situps || 0) / BMT_TARGETS.situpsGoal) * 100)
   const readiness = Math.round((runScore + pushScore + sitScore) / 3)
 
-  // Streak — uses the latest-logged-day anchor so today not yet logged
-  // doesn't reset the count.
   const { streak, atRisk } = getWorkoutStreak(workouts)
 
   const profitAnim = useCountUp(Math.max(0, profit), { duration: 1000 })
@@ -61,207 +56,139 @@ export default function HomeModule({ goTo, onOpenAssistant }) {
     else setCycles((prev) => [{ ...cycle, id: uid() }, ...prev])
   }
 
+  const today = format(new Date(), 'EEEE, MMMM d')
+
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-12">
       <BackupReminder />
 
-      {/* Greeting + quick actions */}
-      <header className="flex items-end justify-between gap-3 flex-wrap animate-slide-down">
-        <div>
-          <div className="page-eyebrow"><Home size={11} /> Home</div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 text-slate-900 dark:text-white">
-            {greeting()}
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-            {format(new Date(), 'EEEE, MMMM d')} · Press <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.08] text-[11px] font-mono">⌘K</kbd> for quick actions
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {onOpenAssistant && (
-            <button className="btn-secondary" onClick={onOpenAssistant} title="Open AI assistant">
-              <Sparkles size={15} /> Ask AI
+      {/* ═══════ Masthead ═══════ */}
+      <header className="animate-slide-down">
+        <div className="flex items-baseline justify-between gap-4 flex-wrap mb-6">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ink-3)]">
+            {today}
+          </div>
+          <div className="flex items-center gap-2">
+            {onOpenAssistant && (
+              <button className="btn btn-secondary" onClick={onOpenAssistant}>
+                <Sparkles size={13} strokeWidth={1.6} /> Assistant
+              </button>
+            )}
+            <button className="btn btn-secondary" onClick={() => goTo?.('fitness')}>
+              <Dumbbell size={13} strokeWidth={1.6} /> Workout
             </button>
-          )}
-          <button className="btn-secondary" onClick={() => goTo?.('fitness')}>
-            <Dumbbell size={15} /> Log workout
-          </button>
-          <button className="btn-primary" onClick={() => setEditingCycle({})}>
-            <Plus size={16} /> New cycle
-          </button>
+            <button className="btn btn-primary" onClick={() => setEditingCycle({})}>
+              <Plus size={14} strokeWidth={2} /> New cycle
+            </button>
+          </div>
         </div>
+
+        <h1 className="font-display text-[var(--ink-1)] leading-[1.02]"
+            style={{
+              fontWeight: 500,
+              fontSize: 'clamp(40px, 32px + 3vw, 72px)',
+              letterSpacing: '-0.035em',
+            }}>
+          {greeting()}.
+        </h1>
+        <p className="text-[var(--ink-3)] mt-3 max-w-2xl"
+           style={{ fontSize: '15px' }}>
+          {focus.title.toLowerCase()}{focus.subtitle ? <> — <span className="text-[var(--ink-2)]">{focus.subtitle}</span></> : ''}
+        </p>
       </header>
 
-      {/* Hero focus card */}
-      <FocusCard focus={focus} onAction={(kind, payload) => {
-        if (kind === 'shipment')   goTo?.('arbitrage')
-        else if (kind === 'milestone') goTo?.('timeline')
-        else if (kind === 'pc-goal')  goTo?.('arbitrage')
-      }} />
-
-      {/* Top metric grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 stagger">
-        <button className="text-left" onClick={() => goTo?.('finance')}>
+      {/* ═══════ Top stat lede — net worth or PC goal ═══════ */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-8">
+        <div className="lg:col-span-7">
           <StatCard
-            variant="compact"
+            variant="hero"
             label="Net worth"
             value={fmtCurrency(netWorthAnim)}
-            sub={`Liquid + tied up + savings`}
-            icon={Wallet}
-            accent="brand"
-          />
-        </button>
-        <button className="text-left" onClick={() => goTo?.('arbitrage')}>
-          <StatCard
-            variant="compact"
-            label="Total profit"
-            value={fmtCurrency(profitAnim)}
-            sub={`${completed} cycle${completed === 1 ? '' : 's'} paid`}
-            icon={TrendingUp}
-            accent={profit >= 0 ? 'emerald' : 'rose'}
-          />
-        </button>
-        <button className="text-left" onClick={() => goTo?.('fitness')}>
-          <StatCard
-            variant="compact"
-            label="BMT readiness"
-            value={`${Math.round(readinessAnim)}%`}
-            sub={readiness >= 100 ? 'Above standard' : `${100 - readiness}% to go`}
-            icon={Activity}
-            accent={readiness >= 70 ? 'emerald' : readiness >= 40 ? 'amber' : 'rose'}
-          />
-        </button>
-        <button className="text-left" onClick={() => goTo?.('fitness')}>
-          <StatCard
-            variant="compact"
-            label="Workout streak"
-            value={`${streakAnim} d`}
-            sub={streak > 0 ? (atRisk ? '⚠️ Log today to extend' : '🔥 Keep it up') : 'Log one to start'}
-            icon={Flame}
-            accent={streak > 0 ? (atRisk ? 'amber' : 'amber') : 'slate'}
-          />
-        </button>
-      </div>
-
-      {/* PC goal mini hero */}
-      <div className="card-padded card-hover">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="min-w-0">
-            <div className="page-eyebrow"><Sparkles size={11} /> PC Goal</div>
-            <div className="flex items-baseline gap-2 mt-2">
-              <span className="text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight text-slate-900 dark:text-white">
-                {fmtCurrency(profitAnim)}
-              </span>
-              <span className="text-base sm:text-lg font-semibold text-slate-400 dark:text-slate-500">
-                / {fmtCurrency(PC_GOAL)}
-              </span>
-            </div>
-            <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {profit >= PC_GOAL
-                ? '🎉 Goal reached — go build that PC.'
-                : `${fmtCurrency(Math.max(0, PC_GOAL - profit))} to go`}
-            </div>
-          </div>
-          <button className="btn-secondary" onClick={() => goTo?.('arbitrage')}>
-            <Target size={15} /> View arbitrage <ArrowRight size={13} />
-          </button>
-        </div>
-        <div className="mt-4">
-          <ProgressBar
-            value={Math.max(0, profit)}
-            max={PC_GOAL}
-            color={profit >= PC_GOAL ? 'emerald' : 'brand'}
-            showPct
+            sub={`Liquid ${fmtCurrency(liquid)} · Tied up ${fmtCurrency(op)} · Pending ${fmtCurrency(pending)} · Savings ${fmtCurrency(savings)}`}
           />
         </div>
-      </div>
-
-      {/* Two-column: Up next + Active shipments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Up next milestones */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="icon-tile bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-300">
-                <MapIcon size={15} />
-              </div>
-              <div>
-                <h3 className="section-title">Up next</h3>
-                <p className="section-sub">Closest milestones</p>
-              </div>
-            </div>
-            <button className="btn-ghost text-xs" onClick={() => goTo?.('timeline')}>
-              See all <ArrowRight size={12} />
-            </button>
+        <div className="lg:col-span-5 lede">
+          <div className="stat-label">PC goal</div>
+          <div className="font-display text-[var(--ink-1)] mt-3 leading-none"
+               style={{ fontWeight: 500, fontSize: '40px', letterSpacing: '-0.025em' }}>
+            {fmtCurrency(profitAnim)}
+            <span className="text-[var(--ink-3)] text-2xl ml-2">/ {fmtCurrency(PC_GOAL)}</span>
           </div>
-          {upNext.length === 0 ? (
-            <div className="card-padded text-center text-sm text-slate-500 dark:text-slate-400">
-              No upcoming milestones.
-            </div>
-          ) : (
-            <div className="space-y-2 stagger">
-              {upNext.map((m) => (
-                <UpNextCard key={m.id} milestone={m} onClick={() => goTo?.('timeline')} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Active shipments */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="icon-tile bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300">
-                <Truck size={15} />
-              </div>
-              <div>
-                <h3 className="section-title">In transit</h3>
-                <p className="section-sub">{shipments.length} active shipment{shipments.length === 1 ? '' : 's'}</p>
-              </div>
-            </div>
-            <button className="btn-ghost text-xs" onClick={() => goTo?.('arbitrage')}>
-              See all <ArrowRight size={12} />
-            </button>
+          <div className="mt-4">
+            <ProgressBar
+              value={Math.max(0, profit)}
+              max={PC_GOAL}
+              color={profit >= PC_GOAL ? 'sage' : 'accent'}
+              showPct={false}
+              size="lg"
+            />
           </div>
-          {shipments.length === 0 ? (
-            <div className="card-padded text-center text-sm text-slate-500 dark:text-slate-400">
-              No active shipments.
-            </div>
-          ) : (
-            <div className="space-y-2 stagger">
-              {shipments.map((c) => (
-                <ShipmentCard key={c.id} cycle={c} onClick={() => goTo?.('arbitrage')} />
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-
-      {/* This week summary */}
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="icon-tile bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
-            <Calendar size={15} />
+          <div className="text-sm text-[var(--ink-3)] mt-3">
+            {profit >= PC_GOAL
+              ? 'Goal reached — go build that PC.'
+              : `${fmtCurrency(Math.max(0, PC_GOAL - profit))} to go · ${Math.round((profit / PC_GOAL) * 100)}% there`}
           </div>
-          <div>
-            <h3 className="section-title">This week</h3>
-            <p className="section-sub">Last 7 days · rolling</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 stagger">
-          <StatCard variant="compact" label="Cycles added"   value={week.cyclesAdded}            icon={TrendingUp} accent="brand" />
-          <StatCard variant="compact" label="Cycles paid"    value={week.cyclesPaid}             icon={Trophy}     accent="emerald" />
-          <StatCard variant="compact" label="Workouts"       value={week.workouts}               icon={Dumbbell}   accent="violet" />
-          <StatCard
-            variant="compact"
-            label="Profit added"
-            value={fmtCurrency(week.profitDelta)}
-            icon={Sparkles}
-            accent={week.profitDelta >= 0 ? 'emerald' : 'rose'}
-          />
         </div>
       </section>
 
-      {/* AI weekly summary */}
+      {/* ═══════ Vital signs ═══════ */}
+      <section>
+        <Headline label="Vital signs" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)] stagger">
+          <button className="text-left bg-[var(--paper-1)] hover:bg-[var(--paper-2)] transition-colors" onClick={() => goTo?.('arbitrage')}>
+            <CompactCell label="Profit" value={fmtCurrency(profitAnim)} sub={`${completed} cycles paid`} accent={profit >= 0 ? 'sage' : 'clay'} />
+          </button>
+          <button className="text-left bg-[var(--paper-1)] hover:bg-[var(--paper-2)] transition-colors" onClick={() => goTo?.('fitness')}>
+            <CompactCell label="BMT readiness" value={`${Math.round(readinessAnim)}%`} sub={readiness >= 100 ? 'Above standard' : `${100 - readiness}% to target`} accent={readiness >= 70 ? 'sage' : readiness >= 40 ? 'accent' : 'clay'} />
+          </button>
+          <button className="text-left bg-[var(--paper-1)] hover:bg-[var(--paper-2)] transition-colors" onClick={() => goTo?.('fitness')}>
+            <CompactCell label="Workout streak" value={`${streakAnim}d`} sub={streak > 0 ? (atRisk ? 'log today to extend' : 'going strong') : 'log one to start'} accent={streak > 0 ? (atRisk ? 'accent' : 'sage') : 'ink'} />
+          </button>
+          <button className="text-left bg-[var(--paper-1)] hover:bg-[var(--paper-2)] transition-colors" onClick={() => goTo?.('finance')}>
+            <CompactCell label="In transit" value={shipments.length} sub={shipments.length === 0 ? 'no active shipments' : `${shipments.length === 1 ? 'package' : 'packages'} on the way`} accent="ink" />
+          </button>
+        </div>
+      </section>
+
+      {/* ═══════ Up next + In transit ═══════ */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <Column
+          label="Up next"
+          sub="Closest milestones"
+          onSeeAll={() => goTo?.('timeline')}
+          empty={upNext.length === 0}
+          emptyText="Nothing scheduled."
+        >
+          {upNext.map((m) => (
+            <UpNextRow key={m.id} milestone={m} onClick={() => goTo?.('timeline')} />
+          ))}
+        </Column>
+
+        <Column
+          label="In transit"
+          sub={`${shipments.length} active ${shipments.length === 1 ? 'shipment' : 'shipments'}`}
+          onSeeAll={() => goTo?.('arbitrage')}
+          empty={shipments.length === 0}
+          emptyText="Nothing in transit."
+        >
+          {shipments.map((c) => (
+            <ShipmentRow key={c.id} cycle={c} onClick={() => goTo?.('arbitrage')} />
+          ))}
+        </Column>
+      </section>
+
+      {/* ═══════ This week ═══════ */}
+      <section>
+        <Headline label="This week" sub="Last 7 days, rolling" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)] stagger">
+          <CompactCell label="Cycles added" value={week.cyclesAdded} accent="ink" />
+          <CompactCell label="Cycles paid" value={week.cyclesPaid} accent="sage" />
+          <CompactCell label="Workouts" value={week.workouts} accent="accent" />
+          <CompactCell label="Profit added" value={fmtCurrency(week.profitDelta)} accent={week.profitDelta >= 0 ? 'sage' : 'clay'} />
+        </div>
+      </section>
+
+      {/* ═══════ Weekly digest ═══════ */}
       <WeeklySummary onOpenAssistant={onOpenAssistant} />
 
       <CycleForm
@@ -274,106 +201,109 @@ export default function HomeModule({ goTo, onOpenAssistant }) {
   )
 }
 
-function FocusCard({ focus, onAction }) {
-  const tones = {
-    rose: {
-      bg: 'from-rose-500 via-rose-600 to-pink-700',
-      label: 'Action needed',
-    },
-    amber: {
-      bg: 'from-amber-500 via-orange-600 to-rose-700',
-      label: 'Heads up',
-    },
-    brand: {
-      bg: 'from-brand-500 via-brand-600 to-indigo-700',
-      label: 'Focus',
-    },
-    emerald: {
-      bg: 'from-emerald-500 via-teal-600 to-cyan-700',
-      label: 'On track',
-    },
-  }
-  const t = tones[focus.tone] || tones.brand
+function Headline({ label, sub }) {
   return (
-    <button
-      onClick={() => onAction(focus.kind, focus)}
-      className={`card-hero w-full text-left p-5 sm:p-6 !bg-none bg-gradient-to-br ${t.bg} animate-scale-in`}
-      style={{ backgroundSize: '180% 180%' }}
-    >
-      <div className="relative flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[11px] uppercase tracking-wider font-bold text-white/70 flex items-center gap-2">
-            <Sparkles size={11} className="animate-soft-pulse" /> {t.label}
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5">
-            {focus.title}
-          </div>
-          {focus.subtitle && (
-            <div className="text-sm text-white/85 mt-1.5">{focus.subtitle}</div>
-          )}
-        </div>
-        <div className="icon-tile bg-white/15 ring-1 ring-white/20 backdrop-blur shrink-0">
-          <ArrowRight size={20} className="text-white" />
-        </div>
+    <div className="flex items-baseline justify-between gap-3 mb-5 pb-3 border-b border-[var(--rule)]">
+      <div>
+        <div className="page-eyebrow">{label}</div>
       </div>
-      {focus.kind === 'pc-goal' && (
-        <div className="relative mt-5">
-          <ProgressBar value={focus.pct} max={100} color="white" showPct={false} size="lg" onDark />
+      {sub && (
+        <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--ink-3)]">
+          {sub}
         </div>
       )}
-    </button>
+    </div>
   )
 }
 
-function UpNextCard({ milestone, onClick }) {
-  const m = milestone
-  const dayLabel = m.days === 0
-    ? 'Today'
-    : m.days < 0
-      ? `${Math.abs(m.days)}d overdue`
-      : `${m.days}d`
-  const tone = m.days < 0 ? 'rose' : m.days <= 7 ? 'amber' : 'brand'
-  const toneCls = {
-    rose:  'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
-    amber: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
-    brand: 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300',
-  }[tone]
+function CompactCell({ label, value, sub, accent = 'ink' }) {
+  const dot = {
+    ink:    'bg-[var(--ink-3)]',
+    accent: 'bg-[var(--accent)]',
+    sage:   'bg-sage-500',
+    clay:   'bg-clay-500',
+    steel:  'bg-steel-500',
+  }[accent] || 'bg-[var(--ink-3)]'
+
   return (
-    <button onClick={onClick} className="card card-hover w-full text-left p-3 flex items-center gap-3">
-      <div className={`shrink-0 px-2.5 py-1.5 rounded-lg font-extrabold tabular-nums text-sm ${toneCls}`}>
+    <div className="px-5 py-5 bg-[var(--paper-1)]">
+      <div className="flex items-center gap-2">
+        <span className={`w-1 h-1 rounded-full ${dot}`} />
+        <div className="stat-label">{label}</div>
+      </div>
+      <div className="font-display text-[var(--ink-1)] mt-3 leading-none"
+           style={{ fontWeight: 500, fontSize: '32px', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>
+        {value}
+      </div>
+      {sub && <div className="text-[12px] text-[var(--ink-3)] mt-2">{sub}</div>}
+    </div>
+  )
+}
+
+function Column({ label, sub, onSeeAll, empty, emptyText, children }) {
+  return (
+    <section>
+      <div className="flex items-baseline justify-between gap-3 mb-4 pb-3 border-b border-[var(--rule)]">
+        <div>
+          <div className="page-eyebrow">{label}</div>
+          {sub && <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--ink-3)] mt-1">{sub}</div>}
+        </div>
+        {onSeeAll && (
+          <button className="btn btn-ghost text-xs" onClick={onSeeAll}>
+            See all <ArrowRight size={11} strokeWidth={1.6} />
+          </button>
+        )}
+      </div>
+      {empty ? (
+        <div className="text-sm text-[var(--ink-3)] py-6">
+          {emptyText}
+        </div>
+      ) : <div className="space-y-px">{children}</div>}
+    </section>
+  )
+}
+
+function UpNextRow({ milestone, onClick }) {
+  const m = milestone
+  const dayLabel = m.days === 0 ? 'Today' : m.days < 0 ? `${Math.abs(m.days)}d overdue` : `${m.days}d`
+  const tone = m.days < 0 ? 'clay' : m.days <= 7 ? 'accent' : 'ink'
+  const toneCls = {
+    clay:   'text-clay-500',
+    accent: 'text-[var(--accent)]',
+    ink:    'text-[var(--ink-2)]',
+  }[tone]
+
+  return (
+    <button onClick={onClick} className="w-full text-left flex items-center gap-4 py-3 border-b border-[var(--rule)] hover:bg-[var(--paper-2)] -mx-2 px-2 transition-colors">
+      <div className={`font-mono tabular-nums text-sm shrink-0 w-20 ${toneCls}`}>
         {dayLabel}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="font-semibold text-slate-900 dark:text-white truncate">{m.title}</div>
-        <div className="text-[11px] text-slate-500 dark:text-slate-400">{fmtDateShort(m.date)} · {m.category}</div>
+        <div className="text-[14px] text-[var(--ink-1)] truncate">{m.title}</div>
+        <div className="font-mono text-[10px] uppercase tracking-[0.10em] text-[var(--ink-3)] mt-0.5">
+          {fmtDateShort(m.date)} · {m.category}
+        </div>
       </div>
-      <ArrowRight size={14} className="text-slate-400 shrink-0" />
+      <ArrowRight size={13} strokeWidth={1.4} className="text-[var(--ink-3)] shrink-0" />
     </button>
   )
 }
 
-function ShipmentCard({ cycle, onClick }) {
+function ShipmentRow({ cycle, onClick }) {
   const status = cycle.trackingStatus || 'In transit'
   return (
-    <button onClick={onClick} className="card card-hover w-full text-left p-3 flex items-center gap-3">
-      <div className="icon-tile bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 shrink-0">
-        <Truck size={15} />
-      </div>
+    <button onClick={onClick} className="w-full text-left flex items-center gap-4 py-3 border-b border-[var(--rule)] hover:bg-[var(--paper-2)] -mx-2 px-2 transition-colors">
       <div className="min-w-0 flex-1">
-        <div className="font-semibold text-slate-900 dark:text-white truncate">
-          {cycle.model} <span className="text-slate-400 text-xs">× {cycle.quantity}</span>
+        <div className="text-[14px] text-[var(--ink-1)]">
+          {cycle.model} <span className="text-[var(--ink-3)]">× {cycle.quantity}</span>
         </div>
-        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
-          <span className="font-mono">{cycle.trackingNumber}</span>
-          <span className="opacity-50">·</span>
-          <span>{status}</span>
+        <div className="font-mono text-[10px] uppercase tracking-[0.10em] text-[var(--ink-3)] mt-0.5 truncate">
+          {cycle.trackingNumber} · {status}
         </div>
       </div>
       <div className="text-right shrink-0">
-        <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
-          Delivers
-        </div>
-        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 tabular-nums">
+        <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--ink-3)]">Delivers</div>
+        <div className="text-[12px] tabular-nums text-[var(--ink-1)] mt-0.5">
           {fmtDateShort(cycle.actualDelivery || cycle.expectedDelivery)}
         </div>
       </div>

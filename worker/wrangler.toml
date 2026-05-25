@@ -5,8 +5,6 @@ compatibility_date = "2025-01-01"
 # Optional: lock down which origin can call this worker (recommended in prod).
 # [vars]
 # ALLOWED_ORIGIN = "https://your-deployed-app.example.com"
-# UPS_ENV = "prod"   # or "test" for the UPS sandbox
 
-# Set secrets with:
-#   wrangler secret put UPS_CLIENT_ID
-#   wrangler secret put UPS_CLIENT_SECRET
+# Set the TrackingMore API key as a secret with:
+#   wrangler secret put TRACKINGMORE_API_KEY

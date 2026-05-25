@@ -152,5 +152,7 @@ export function defaultSettings() {
   return {
     theme: 'dark',
     trackingProxyUrl: '',
+    geminiApiKey: '',
+    geminiModel: 'gemini-2.0-flash-lite',
   }
 }

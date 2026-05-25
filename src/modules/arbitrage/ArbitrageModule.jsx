@@ -132,160 +132,121 @@ export default function ArbitrageModule() {
   }, [])
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-10">
       {/* ───────── Page header ───────── */}
-      <header className="flex items-end justify-between gap-3 flex-wrap animate-slide-down">
-        <div>
-          <div className="page-eyebrow">
-            <TrendingUp size={11} /> Arbitrage
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 text-slate-900 dark:text-white">
-            Cycle command
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-            iPhone flips · MobileX trade-in · CardCash payouts
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <header className="animate-slide-down">
+        <div className="page-eyebrow"><TrendingUp size={11} strokeWidth={1.6} /> Arbitrage</div>
+        <h1 className="page-title">Cycle command</h1>
+        <p className="page-subtitle">iPhone flips · MobileX trade-in · CardCash payouts</p>
+
+        <div className="flex items-center gap-2 flex-wrap mt-6">
           {trackedCount > 0 && (
             <button
-              className="btn-secondary"
+              className="btn btn-secondary"
               onClick={handleRefreshAll}
               disabled={refreshingAll}
               title={proxyConfigured ? `Refresh ${trackedCount} active shipments` : 'Configure proxy URL in Settings'}
             >
-              <RefreshCw size={15} className={refreshingAll ? 'animate-spin' : ''} />
+              <RefreshCw size={13} strokeWidth={1.6} className={refreshingAll ? 'animate-spin' : ''} />
               {refreshingAll ? 'Refreshing…' : `Refresh tracking (${trackedCount})`}
             </button>
           )}
-          <button className="btn-secondary" onClick={() => setSheetsOpen(true)}>
-            <FileSpreadsheet size={15} /> Import
+          <button className="btn btn-secondary" onClick={() => setSheetsOpen(true)}>
+            <FileSpreadsheet size={13} strokeWidth={1.6} /> Import
           </button>
-          <button className="btn-primary" onClick={() => setEditing({})}>
-            <Plus size={16} /> New cycle
+          <button className="btn btn-primary" onClick={() => setEditing({})}>
+            <Plus size={14} strokeWidth={2} /> New cycle
           </button>
         </div>
       </header>
 
-      {/* ───────── Hero + liquid cash ───────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 stagger">
-        {/* Hero PC goal */}
-        <div className="lg:col-span-2">
-          <div className="card-hero p-5 sm:p-7 h-full">
-            <div className="relative flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[11px] uppercase tracking-wider font-bold text-white/70 flex items-center gap-2">
-                  <Sparkles size={11} className="animate-soft-pulse" /> PC Goal
-                </div>
-                <div className="text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tight mt-2">
-                  {fmtCurrency(profitAnim)}
-                  <span className="text-xl sm:text-2xl font-semibold text-white/60 ml-2">
-                    / {fmtCurrency(PC_GOAL)}
-                  </span>
-                </div>
-                <div className="mt-1 text-sm text-white/80">
-                  {profit >= PC_GOAL
-                    ? '🎉 Goal reached — go build that PC.'
-                    : `${fmtCurrency(pcRemaining)} to go · ${pcPct.toFixed(0)}% there`}
-                </div>
-              </div>
-              <div className="icon-tile bg-white/15 ring-1 ring-white/20 backdrop-blur shrink-0">
-                <Target size={22} className="text-white" />
-              </div>
-            </div>
-            <div className="relative mt-5">
-              <ProgressBar
-                value={Math.max(0, profit)}
-                max={PC_GOAL}
-                color="white"
-                showPct={false}
-                size="lg"
-                onDark
-              />
-            </div>
-            <div className="relative mt-5 grid grid-cols-3 gap-3">
-              <HeroStatRow label="Cycles" value={completedAnim} accent="emerald" />
-              <HeroStatRow label="In transit" value={trackedAnim} accent="amber" pulse={trackedCount > 0} />
-              <HeroStatRow label="Tracked" value={totalCyclesAnim} accent="brand" />
-            </div>
+      {/* ───────── Lede: PC goal as editorial number ───────── */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-6">
+        <div className="lg:col-span-7 lede">
+          <div className="stat-label">PC goal · all-time profit</div>
+          <div className="font-display text-[var(--ink-1)] mt-3 leading-none"
+               style={{ fontWeight: 500, fontSize: 'clamp(56px, 48px + 2.5vw, 96px)', letterSpacing: '-0.04em' }}>
+            {fmtCurrency(profitAnim)}
+          </div>
+          <div className="text-[var(--ink-3)] mt-3">
+            of {fmtCurrency(PC_GOAL)} target
+            {profit < PC_GOAL && <> · {fmtCurrency(pcRemaining)} to go</>}
+          </div>
+          <div className="mt-5">
+            <ProgressBar
+              value={Math.max(0, profit)}
+              max={PC_GOAL}
+              color={profit >= PC_GOAL ? 'sage' : 'accent'}
+              showPct
+              size="lg"
+            />
           </div>
         </div>
 
-        {/* Liquid cash editable */}
-        <div className="card-padded card-hover">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="stat-label">Liquid cash</div>
-              <AnimatedCurrency value={liquid} className="stat-value mt-1.5" />
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Tap to update available capital
-              </div>
-            </div>
-            <div className="icon-tile bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-300 shrink-0">
-              <Wallet size={18} />
-            </div>
-          </div>
+        <div className="lg:col-span-5 grid grid-cols-3 gap-px bg-[var(--rule)] border border-[var(--rule)] self-end">
+          <CycleStatCell label="Cycles" value={completedAnim} />
+          <CycleStatCell label="In transit" value={trackedAnim} pulse={trackedCount > 0} />
+          <CycleStatCell label="Logged" value={totalCyclesAnim} />
+        </div>
+      </section>
+
+      {/* ───────── Liquid cash + capital snapshot ───────── */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)] stagger">
+        <div className="bg-[var(--paper-1)] p-5">
+          <div className="stat-label">Liquid cash</div>
           <input
             type="number"
             step="0.01"
-            className="input mt-4 text-sm"
+            className="font-display text-[var(--ink-1)] mt-3 w-full bg-transparent border-0 outline-none focus:bg-[var(--paper-2)]"
+            style={{ fontWeight: 500, fontSize: '28px', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}
             value={liquid}
             onChange={(e) => setBalance({ ...balance, liquidCash: parseFloat(e.target.value || '0') })}
             aria-label="Liquid cash"
           />
+          <div className="text-[11px] text-[var(--ink-3)] mt-1">Tap to update</div>
         </div>
-      </div>
 
-      {/* Compact stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 stagger">
-        <StatCard
-          variant="compact"
-          label="Operating capital"
-          value={<AnimatedCurrency value={op} />}
-          sub="Tied up in active cycles"
-          icon={DollarSign}
-          accent="amber"
-        />
-        <StatCard
-          variant="compact"
-          label="Pending CardCash"
-          value={<AnimatedCurrency value={pending} />}
-          sub="Submitted, awaiting payout"
-          icon={Clock}
-          accent="violet"
-        />
-        <StatCard
-          variant="compact"
-          label="Total profit"
-          value={<AnimatedCurrency value={profit} />}
-          sub="All-time, paid + projected"
-          icon={TrendingUp}
-          accent={profit >= 0 ? 'emerald' : 'rose'}
-        />
-        <StatCard
-          variant="compact"
-          label="In transit"
-          value={trackedAnim}
-          sub={proxyConfigured ? 'Live status enabled' : 'Add proxy in Settings'}
-          icon={Truck}
-          accent="brand"
-        />
-      </div>
+        <div className="bg-[var(--paper-1)] p-5">
+          <div className="stat-label">Operating</div>
+          <div className="font-display text-[var(--ink-1)] mt-3 leading-none"
+               style={{ fontWeight: 500, fontSize: '28px', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>
+            <AnimatedCurrency value={op} />
+          </div>
+          <div className="text-[11px] text-[var(--ink-3)] mt-2">Tied up in cycles</div>
+        </div>
+
+        <div className="bg-[var(--paper-1)] p-5">
+          <div className="stat-label">Pending CardCash</div>
+          <div className="font-display text-[var(--ink-1)] mt-3 leading-none"
+               style={{ fontWeight: 500, fontSize: '28px', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>
+            <AnimatedCurrency value={pending} />
+          </div>
+          <div className="text-[11px] text-[var(--ink-3)] mt-2">Awaiting payout</div>
+        </div>
+
+        <div className="bg-[var(--paper-1)] p-5">
+          <div className="stat-label">Total profit</div>
+          <div className="font-display mt-3 leading-none"
+               style={{ fontWeight: 500, fontSize: '28px', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums', color: profit >= 0 ? 'var(--ink-1)' : 'var(--clay-500, #c45f3f)' }}>
+            <AnimatedCurrency value={profit} />
+          </div>
+          <div className="text-[11px] text-[var(--ink-3)] mt-2">Paid + projected</div>
+        </div>
+      </section>
 
       {/* ───────── Cycle log ───────── */}
       <section className="animate-slide-up">
-        <div className="flex items-end justify-between gap-3 flex-wrap mb-4">
+        <div className="flex items-end justify-between gap-3 flex-wrap mb-5 pb-3 border-b border-[var(--rule)]">
           <div>
-            <div className="page-eyebrow">
-              <Zap size={11} /> Cycles
-            </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">Cycle log</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Every order from purchase to payout.
-            </p>
+            <div className="page-eyebrow"><Zap size={11} strokeWidth={1.6} /> Cycles</div>
+            <h2 className="font-display text-[var(--ink-1)] mt-2"
+                style={{ fontWeight: 500, fontSize: '22px', letterSpacing: '-0.02em' }}>
+              Cycle log
+            </h2>
+            <p className="section-sub">Every order from purchase to payout.</p>
           </div>
-          <button className="btn-secondary" onClick={() => setEditing({})}>
-            <Plus size={15} /> Add cycle
+          <button className="btn btn-secondary" onClick={() => setEditing({})}>
+            <Plus size={13} strokeWidth={1.6} /> Add cycle
           </button>
         </div>
         <CycleList
@@ -318,24 +279,22 @@ export default function ArbitrageModule() {
   )
 }
 
-function HeroStatRow({ label, value, accent, pulse = false }) {
-  const dots = {
-    emerald: 'bg-emerald-300',
-    amber:   'bg-amber-300',
-    brand:   'bg-sky-300',
-  }
+function CycleStatCell({ label, value, pulse }) {
   return (
-    <div className="rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur p-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
+    <div className="bg-[var(--paper-1)] px-4 py-5">
+      <div className="flex items-center gap-2">
         <span className="relative inline-flex">
-          <span className={`w-1.5 h-1.5 rounded-full ${dots[accent] || dots.brand}`} />
+          <span className="w-1 h-1 rounded-full bg-[var(--accent)]" />
           {pulse && (
-            <span className={`absolute inset-0 w-1.5 h-1.5 rounded-full ${dots[accent] || dots.brand} animate-ping-slow`} />
+            <span className="absolute inset-0 w-1 h-1 rounded-full bg-[var(--accent)] animate-ping-slow" />
           )}
         </span>
-        {label}
+        <div className="stat-label">{label}</div>
       </div>
-      <div className="text-2xl font-extrabold tabular-nums mt-1">{value}</div>
+      <div className="font-display text-[var(--ink-1)] mt-3 leading-none"
+           style={{ fontWeight: 500, fontSize: '32px', letterSpacing: '-0.025em', fontVariantNumeric: 'tabular-nums' }}>
+        {value}
+      </div>
     </div>
   )
 }

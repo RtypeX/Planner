@@ -45,37 +45,31 @@ export default function FinanceModule() {
         <div className="page-eyebrow">
           <Wallet size={11} /> Finance
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 text-slate-900 dark:text-white">
-          Net worth & goals
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+        <h1 className="page-title">Net worth & goals</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
           Balances · realized profit · goal pacing
         </p>
       </header>
 
-      {/* ───────── Net worth hero ───────── */}
-      <div className="card-hero p-5 sm:p-7 animate-scale-in">
-        <div className="relative flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <div className="text-[11px] uppercase tracking-wider font-bold text-white/70 flex items-center gap-2">
-              <Sparkles size={11} className="animate-soft-pulse" /> Net worth
-            </div>
-            <AnimatedHero value={netWorth} className="text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tight mt-2" />
-            <div className="mt-1 text-sm text-white/80">
-              Liquid + operating + pending + personal savings
-            </div>
+      {/* ───────── Net worth lede ───────── */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-6">
+        <div className="lg:col-span-7 lede">
+          <div className="stat-label">Net worth</div>
+          <div className="font-display text-[var(--ink-1)] mt-3 leading-none"
+               style={{ fontWeight: 500, fontSize: 'clamp(56px, 48px + 2.5vw, 96px)', letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>
+            <AnimatedHero value={netWorth} />
           </div>
-          <div className="icon-tile bg-white/15 ring-1 ring-white/20 backdrop-blur shrink-0">
-            <Wallet size={22} className="text-white" />
+          <div className="text-[var(--ink-3)] mt-3">
+            Liquid + operating + pending + personal savings
           </div>
         </div>
-        <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 stagger">
-          <SegBar label="Liquid"    value={liquid}  total={netWorth} dot="bg-sky-300" />
-          <SegBar label="Operating" value={op}      total={netWorth} dot="bg-amber-300" />
-          <SegBar label="Pending"   value={pending} total={netWorth} dot="bg-violet-300" />
-          <SegBar label="Savings"   value={savings} total={netWorth} dot="bg-emerald-300" />
+        <div className="lg:col-span-5 grid grid-cols-2 gap-px bg-[var(--rule)] border border-[var(--rule)] self-end stagger">
+          <SegCell label="Liquid"    value={liquid}  total={netWorth} />
+          <SegCell label="Operating" value={op}      total={netWorth} />
+          <SegCell label="Pending"   value={pending} total={netWorth} />
+          <SegCell label="Savings"   value={savings} total={netWorth} />
         </div>
-      </div>
+      </section>
 
       {/* ───────── Editable balances ───────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 stagger">
@@ -206,26 +200,28 @@ function EditableBalance({ label, value, icon: Icon, accent, onChange }) {
   )
 }
 
-function SegBar({ label, value, total, dot }) {
+function SegCell({ label, value, total }) {
   const pct = total > 0 ? (value / total) * 100 : 0
   const animPct = useCountUp(pct, { duration: 900, decimals: 0 })
   return (
-    <div className="rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur p-2.5">
-      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1">
-        <span className="flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-          {label}
-        </span>
-        <span className="tabular-nums">{animPct.toFixed(0)}%</span>
+    <div className="bg-[var(--paper-1)] px-4 py-4">
+      <div className="flex items-baseline justify-between mb-2">
+        <div className="stat-label">{label}</div>
+        <div className="font-mono text-[10px] tabular-nums text-[var(--ink-3)]">
+          {animPct.toFixed(0)}%
+        </div>
       </div>
-      <div className="text-base font-extrabold tabular-nums tracking-tight">{fmtCurrency(value)}</div>
+      <div className="font-display text-[var(--ink-1)] leading-none"
+           style={{ fontWeight: 500, fontSize: '20px', letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
+        {fmtCurrency(value)}
+      </div>
     </div>
   )
 }
 
-function AnimatedHero({ value, className = '' }) {
+function AnimatedHero({ value }) {
   const v = useCountUp(value, { duration: 1100 })
-  return <div className={className}>{fmtCurrency(v)}</div>
+  return <>{fmtCurrency(v)}</>
 }
 
 function AddGoal({ open, onClose, onSave }) {

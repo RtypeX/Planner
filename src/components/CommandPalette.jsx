@@ -165,47 +165,49 @@ export default function CommandPalette({ open, onClose, goTo, openSettings, open
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-start justify-center p-4 sm:pt-[12vh] animate-fade-in">
-      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={onClose} aria-hidden />
-      <div className="relative w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900
-                      border border-slate-200/80 dark:border-white/[0.06]
-                      shadow-2xl shadow-slate-950/30 dark:shadow-black/50
+    <div className="fixed inset-0 z-[70] flex items-start justify-center p-4 sm:pt-[14vh] animate-fade-in">
+      <div className="absolute inset-0 bg-[var(--ink-1)]/40" onClick={onClose} aria-hidden />
+      <div className="relative w-full max-w-xl
+                      bg-[var(--paper-1)]
+                      border border-[var(--rule-strong)]
+                      shadow-soft-lg
                       overflow-hidden animate-slide-up">
         {/* Search header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/70 dark:border-white/[0.06]">
-          <Search size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--rule)]">
+          <Search size={15} strokeWidth={1.6} className="text-[var(--ink-3)] shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search pages, run actions…"
+            placeholder="Search pages, run actions, jump to a cycle…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent border-0 outline-none text-sm text-slate-900 dark:text-white
-                       placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            className="flex-1 bg-transparent border-0 outline-none text-[14px] text-[var(--ink-1)]
+                       placeholder:text-[var(--ink-4)]"
           />
           {query && (
-            <button className="btn-ghost !p-1" onClick={() => setQuery('')} aria-label="Clear">
-              <X size={14} />
+            <button className="btn btn-ghost btn-icon !p-1" onClick={() => setQuery('')} aria-label="Clear">
+              <X size={14} strokeWidth={1.5} />
             </button>
           )}
-          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded
-                          bg-slate-100 dark:bg-white/[0.08] text-[10px] font-mono
-                          text-slate-500 dark:text-slate-400">
-            ESC
-          </kbd>
+          <kbd className="kbd hidden sm:inline-flex">ESC</kbd>
         </div>
 
         {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-              No matches for <span className="font-semibold text-slate-700 dark:text-slate-200">"{query}"</span>
+            <div className="px-6 py-14 text-center">
+              <div className="font-display text-[var(--ink-1)] text-lg" style={{ fontWeight: 500, letterSpacing: '-0.02em' }}>
+                Nothing matches.
+              </div>
+              <div className="font-mono text-[11px] uppercase tracking-[0.10em] text-[var(--ink-3)] mt-2">
+                "{query}"
+              </div>
             </div>
           ) : (
-            <ul className="py-1">
+            <ul className="py-2">
               {grouped.map((g) => (
                 <li key={g.name}>
-                  <div className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                  <div className="px-4 pt-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ink-3)]">
                     {g.name}
                   </div>
                   <ul>
@@ -219,25 +221,20 @@ export default function CommandPalette({ open, onClose, goTo, openSettings, open
                             onClick={() => { item.action(); onClose() }}
                             className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors
                               ${active
-                                ? 'bg-brand-50 dark:bg-brand-500/15 text-slate-900 dark:text-white'
-                                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'}`}
+                                ? 'bg-[var(--paper-2)] text-[var(--ink-1)]'
+                                : 'text-[var(--ink-2)] hover:bg-[var(--paper-2)]'}`}
                           >
-                            <div className={`icon-tile shrink-0 transition-colors
-                              ${active
-                                ? 'bg-brand-500 text-white'
-                                : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300'}`}>
-                              <Icon size={14} />
-                            </div>
+                            <Icon size={14} strokeWidth={1.6} className={`shrink-0 ${active ? 'text-[var(--accent)]' : 'text-[var(--ink-3)]'}`} />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium truncate">{item.label}</div>
+                              <div className="text-sm">{item.label}</div>
                               {item.subtitle && (
-                                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                <div className="text-[11px] text-[var(--ink-3)] mt-0.5 truncate">
                                   {item.subtitle}
                                 </div>
                               )}
                             </div>
                             {active && (
-                              <CornerDownLeft size={13} className="text-slate-400 shrink-0" />
+                              <CornerDownLeft size={12} strokeWidth={1.5} className="text-[var(--accent)] shrink-0" />
                             )}
                           </button>
                         </li>
@@ -251,17 +248,19 @@ export default function CommandPalette({ open, onClose, goTo, openSettings, open
         </div>
 
         {/* Footer hint */}
-        <div className="px-4 py-2 border-t border-slate-200/70 dark:border-white/[0.06]
-                        flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1">
-              <ArrowDownUp size={11} /> navigate
+        <div className="px-4 py-2.5 border-t border-[var(--rule)]
+                        flex items-center justify-between">
+          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.10em] text-[var(--ink-3)]">
+            <span className="inline-flex items-center gap-1.5">
+              <kbd className="kbd">↑</kbd><kbd className="kbd">↓</kbd> nav
             </span>
-            <span className="inline-flex items-center gap-1">
-              <CornerDownLeft size={11} /> select
+            <span className="inline-flex items-center gap-1.5">
+              <kbd className="kbd">↵</kbd> select
             </span>
           </div>
-          <span>{filtered.length} result{filtered.length === 1 ? '' : 's'}</span>
+          <span className="font-mono text-[10px] tabular-nums uppercase tracking-[0.10em] text-[var(--ink-3)]">
+            {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
+          </span>
         </div>
       </div>
     </div>

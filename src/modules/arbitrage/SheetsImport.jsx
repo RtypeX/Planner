@@ -22,9 +22,10 @@ const SYSTEM_PROMPT = `You parse spreadsheet data into iPhone arbitrage cycle ob
 
 Infer values from context. If a field is missing, use sensible defaults. Dates should be YYYY-MM-DD. Return [] if you cannot parse anything.`
 
-async function callGemini(apiKey, pastedText) {
+async function callGemini(apiKey, pastedText, model) {
   const response = await generate({
     apiKey,
+    model,
     systemInstruction: SYSTEM_PROMPT,
     contents: [{ role: 'user', parts: [{ text: `Parse this spreadsheet data into cycles:\n\n${pastedText}` }] }],
     generationConfig: { temperature: 0.1 },
@@ -48,7 +49,7 @@ export default function SheetsImport({ open, onClose }) {
     setLoading(true)
     setPreview(null)
     try {
-      const parsed = await callGemini(apiKey, text.trim())
+      const parsed = await callGemini(apiKey, text.trim(), settings.geminiModel)
       if (!Array.isArray(parsed) || parsed.length === 0) {
         setError('Gemini could not parse any cycles from that data.')
         return

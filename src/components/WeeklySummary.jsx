@@ -4,11 +4,18 @@ import { useAppData } from '../lib/AppData'
 import { generate, extractText } from '../lib/gemini'
 import { summarizeState } from '../lib/aiTools'
 
-const PROMPT = `You write a 3–5 sentence weekly digest for the user of a personal command-center app.
-Tone: motivating, concise, factual. Avoid fluff and avoid assumptions not in the data.
-Focus on: cycles paid this week and any pending payouts, workout consistency vs. BMT targets,
-upcoming milestones in the next ~10 days, and the PC goal progress.
-Don't bullet — write 3–5 short sentences. Include one specific number where possible.`
+const PROMPT = `Write a 3-sentence weekly recap for Dylan's planner. Tone: a friend texting, not a corporate newsletter.
+
+Hard rules:
+- Plain sentences, no bullets, no headers.
+- No openers like "This week,", "Here's your recap,", "Great progress!". Just start with the most interesting fact.
+- Drop fluff words: "really", "amazing", "incredible", "journey", "keep up the great work".
+- Include one specific number. Don't pad with vague encouragement.
+- If the week was quiet, say it was quiet. Don't manufacture wins.
+- Lowercase casual is fine. Contractions are fine.
+
+What to cover (pick the 2-3 that actually matter for this week):
+cycles paid this week, pending payouts waiting, workout count vs last week, biggest fitness PR, milestones in next ~10 days, PC-goal progress.`
 
 /**
  * AI-generated weekly digest card on the home page. Caches the most recent
@@ -33,14 +40,15 @@ export default function WeeklySummary({ onOpenAssistant }) {
       const snapshot = summarizeState(app)
       const response = await generate({
         apiKey,
+        model: app.settings.geminiModel,
         systemInstruction: PROMPT,
         contents: [
           {
             role: 'user',
-            parts: [{ text: `Here is the current state JSON:\n${JSON.stringify(snapshot, null, 2)}\n\nGive me this week's digest.` }],
+            parts: [{ text: `Current state JSON:\n${JSON.stringify(snapshot, null, 2)}\n\nGive me this week's recap.` }],
           },
         ],
-        generationConfig: { temperature: 0.5 },
+        generationConfig: { temperature: 0.65 },
       })
       setText(extractText(response) || 'No content returned.')
     } catch (err) {

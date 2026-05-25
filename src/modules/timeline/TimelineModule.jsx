@@ -9,10 +9,8 @@ export default function TimelineModule() {
         <div className="page-eyebrow">
           <MapIcon size={11} /> Timeline
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 text-slate-900 dark:text-white">
-          The path to BMT
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+        <h1 className="page-title">The path to BMT</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
           Big rocks · ASVAB prep · countdowns
         </p>
       </header>

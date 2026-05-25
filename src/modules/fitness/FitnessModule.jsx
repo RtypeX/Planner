@@ -11,10 +11,8 @@ export default function FitnessModule() {
         <div className="page-eyebrow">
           <Dumbbell size={11} /> Fitness
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 text-slate-900 dark:text-white">
-          BMT readiness
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+        <h1 className="page-title">BMT readiness</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">
           Standards · workouts · streaks
         </p>
       </header>
