@@ -12,7 +12,9 @@
 // without env vars still works). For production set all three.
 
 export const config = {
-  matcher: '/((?!__auth/|favicon\\.svg|manifest\\.webmanifest|sw\\.js).*)',
+  // Run middleware on everything except the favicon (which the login page
+  // itself needs to load before authentication).
+  matcher: '/((?!favicon\\.svg).*)',
 }
 
 const COOKIE_NAME = 'hq_session'
