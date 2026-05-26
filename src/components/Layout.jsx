@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import {
+  Home, TrendingUp, Dumbbell, Map as MapIcon, Wallet,
   Settings as SettingsIcon, Menu, X, Bot,
 } from 'lucide-react'
 import SettingsPanel from './SettingsPanel'
 
 const NAV = [
-  { id: 'home',      label: 'Home',      number: '01' },
-  { id: 'arbitrage', label: 'Arbitrage', number: '02' },
-  { id: 'fitness',   label: 'Fitness',   number: '03' },
-  { id: 'timeline',  label: 'Timeline',  number: '04' },
-  { id: 'finance',   label: 'Finance',   number: '05' },
+  { id: 'home',      label: 'Home',      icon: Home,        tint: '#0a84ff' },
+  { id: 'arbitrage', label: 'Arbitrage', icon: TrendingUp,  tint: '#bf5af2' },
+  { id: 'fitness',   label: 'Fitness',   icon: Dumbbell,    tint: '#30d158' },
+  { id: 'timeline',  label: 'Timeline',  icon: MapIcon,     tint: '#ff9f0a' },
+  { id: 'finance',   label: 'Finance',   icon: Wallet,      tint: '#5e5ce6' },
 ]
 
 export default function Layout({
@@ -26,49 +27,46 @@ export default function Layout({
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* ───────── Desktop sidebar ───────── */}
-      <aside className="hidden lg:flex lg:flex-col w-60 shrink-0
-                        border-r border-[var(--rule)]
-                        bg-[var(--paper-0)]">
-        <Brand />
-        <nav className="flex-1 px-4 py-4 space-y-px">
-          {NAV.map((item) => (
-            <NavButton
-              key={item.id}
-              item={item}
-              active={activeTab === item.id}
-              onClick={() => setActiveTab(item.id)}
-            />
-          ))}
-        </nav>
-        <div className="px-4 py-4 border-t border-[var(--rule)] space-y-px">
-          {onOpenAssistant && (
-            <SidebarLink icon={Bot} label="Assistant" onClick={onOpenAssistant} />
-          )}
-          <SidebarLink icon={SettingsIcon} label="Settings" onClick={() => setSettingsOpen(true)} />
-          <KbdHint />
+      {/* ───────── Desktop sidebar — floating glass ───────── */}
+      <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 sticky top-0 h-screen p-4">
+        <div className="glass-strong h-full flex flex-col p-2">
+          <Brand />
+          <nav className="flex-1 px-2 py-2 space-y-1">
+            {NAV.map((item) => (
+              <NavButton
+                key={item.id}
+                item={item}
+                active={activeTab === item.id}
+                onClick={() => setActiveTab(item.id)}
+              />
+            ))}
+          </nav>
+          <div className="px-2 py-2 border-t border-[var(--separator-thin)] space-y-1">
+            {onOpenAssistant && (
+              <SidebarLink icon={Bot} label="Assistant" onClick={onOpenAssistant} />
+            )}
+            <SidebarLink icon={SettingsIcon} label="Settings" onClick={() => setSettingsOpen(true)} />
+            <KbdHint />
+          </div>
         </div>
       </aside>
 
-      {/* ───────── Mobile top bar ───────── */}
-      <header className="lg:hidden sticky top-0 z-30
-                         bg-[var(--paper-0)]
-                         border-b border-[var(--rule)]">
-        <div className="flex items-center justify-between px-4 h-14">
+      {/* ───────── Mobile top bar — frosted ───────── */}
+      <header className="lg:hidden sticky top-0 z-30 px-3 pt-3">
+        <div className="glass flex items-center justify-between px-3 h-14 rounded-2xl">
           <div className="flex items-center gap-3 min-w-0">
             <BrandMark />
             <div className="min-w-0">
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ink-3)]">
-                {activeItem.number} · {activeItem.label}
-              </div>
-              <div className="font-display text-base text-[var(--ink-1)] -mt-0.5 truncate"
-                   style={{ fontWeight: 500, letterSpacing: '-0.02em' }}>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.10em] text-[var(--label-3)]">
                 Dylan's HQ
+              </div>
+              <div className="text-[15px] font-semibold text-[var(--label-1)] -mt-0.5 truncate tracking-tight">
+                {activeItem.label}
               </div>
             </div>
           </div>
           <button className="btn btn-ghost btn-icon" onClick={() => setMobileMenuOpen(true)} aria-label="Menu">
-            <Menu size={18} />
+            <Menu size={18} strokeWidth={2} />
           </button>
         </div>
       </header>
@@ -76,17 +74,16 @@ export default function Layout({
       {/* ───────── Mobile slide-over ───────── */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 animate-fade-in">
-          <div className="absolute inset-0 bg-[var(--ink-1)]/40" onClick={() => setMobileMenuOpen(false)} />
-          <div className="absolute right-0 top-0 bottom-0 w-72 bg-[var(--paper-0)]
-                          border-l border-[var(--rule)]
-                          flex flex-col animate-slide-up">
-            <div className="flex items-center justify-between p-5 border-b border-[var(--rule)]">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+               onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute right-3 top-3 bottom-3 w-72 glass-strong p-2 flex flex-col animate-spring-up">
+            <div className="flex items-center justify-between p-3">
               <Brand inline />
               <button className="btn btn-ghost btn-icon" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
-                <X size={18} />
+                <X size={18} strokeWidth={2} />
               </button>
             </div>
-            <nav className="flex-1 px-4 py-4 space-y-px">
+            <nav className="flex-1 px-2 py-2 space-y-1">
               {NAV.map((item) => (
                 <NavButton
                   key={item.id}
@@ -96,7 +93,7 @@ export default function Layout({
                 />
               ))}
             </nav>
-            <div className="px-4 py-4 border-t border-[var(--rule)] space-y-px">
+            <div className="px-2 py-2 border-t border-[var(--separator-thin)] space-y-1">
               {onOpenAssistant && (
                 <SidebarLink icon={Bot} label="Assistant" onClick={() => { onOpenAssistant(); setMobileMenuOpen(false) }} />
               )}
@@ -107,43 +104,41 @@ export default function Layout({
       )}
 
       {/* ───────── Main content ───────── */}
-      <main className="flex-1 min-w-0 pb-24 lg:pb-0">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 sm:py-10">
+      <main className="flex-1 min-w-0 pb-28 lg:pb-0 lg:pr-4 lg:pt-4">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-6 sm:py-8">
           {children}
         </div>
       </main>
 
-      {/* ───────── Mobile bottom tab bar ───────── */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30
-                      bg-[var(--paper-0)]
-                      border-t border-[var(--rule)]
-                      pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5 h-14">
-          {NAV.map((item) => {
-            const active = activeTab === item.id
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className="relative flex flex-col items-center justify-center transition-colors"
-                aria-label={item.label}
-              >
-                {active && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-px bg-[var(--accent)]" />
-                )}
-                <span className={`font-mono text-[10px] uppercase tracking-[0.10em] ${
-                  active ? 'text-[var(--ink-1)]' : 'text-[var(--ink-3)]'
-                }`}>
-                  {item.number}
-                </span>
-                <span className={`text-[11px] mt-0.5 font-medium ${
-                  active ? 'text-[var(--ink-1)]' : 'text-[var(--ink-3)]'
-                }`}>
-                  {item.label}
-                </span>
-              </button>
-            )
-          })}
+      {/* ───────── Mobile bottom tab bar — floating glass ───────── */}
+      <nav className="lg:hidden fixed bottom-3 inset-x-3 z-30 pb-[env(safe-area-inset-bottom)]">
+        <div className="glass-strong rounded-3xl px-2 py-1.5">
+          <div className="grid grid-cols-5">
+            {NAV.map((item) => {
+              const Icon = item.icon
+              const active = activeTab === item.id
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className="relative flex flex-col items-center justify-center py-2 transition-transform active:scale-90"
+                  style={{ transition: 'transform 200ms cubic-bezier(0.32, 0.72, 0, 1)' }}
+                  aria-label={item.label}
+                >
+                  <Icon
+                    size={22}
+                    strokeWidth={active ? 2.4 : 1.7}
+                    style={{ color: active ? item.tint : 'var(--label-3)' }}
+                  />
+                  <span className={`text-[10px] mt-0.5 font-semibold tracking-tight transition-colors ${
+                    active ? 'text-[var(--label-1)]' : 'text-[var(--label-3)]'
+                  }`}>
+                    {item.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </nav>
 
@@ -156,11 +151,11 @@ function SidebarLink({ icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-2 rounded text-sm
-                 text-[var(--ink-2)] hover:bg-[var(--paper-2)] hover:text-[var(--ink-1)]
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium
+                 text-[var(--label-2)] hover:bg-[var(--glass-bg-thin)] hover:text-[var(--label-1)]
                  transition-colors"
     >
-      <Icon size={14} strokeWidth={1.7} />
+      <Icon size={16} strokeWidth={1.8} />
       <span>{label}</span>
     </button>
   )
@@ -169,9 +164,11 @@ function SidebarLink({ icon: Icon, label, onClick }) {
 function KbdHint() {
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || '')
   return (
-    <div className="px-3 py-2 mt-2 flex items-center justify-between
-                    text-[10px] font-mono text-[var(--ink-3)] tracking-[0.10em] uppercase">
-      <span>Quick</span>
+    <div className="px-3 py-2 mt-2 flex items-center justify-between text-[11px] text-[var(--label-3)]">
+      <span className="flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-sys-green animate-soft-pulse" />
+        Quick actions
+      </span>
       <kbd className="kbd">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
     </div>
   )
@@ -179,16 +176,13 @@ function KbdHint() {
 
 function Brand({ inline = false }) {
   return (
-    <div className={`flex items-center gap-3 ${inline ? '' : 'px-5 py-6 border-b border-[var(--rule)]'}`}>
+    <div className={`flex items-center gap-3 ${inline ? '' : 'px-3 py-3'}`}>
       <BrandMark />
       <div className="min-w-0">
-        <div className="font-display text-[var(--ink-1)] leading-none"
-             style={{ fontWeight: 500, fontSize: '17px', letterSpacing: '-0.02em' }}>
+        <div className="font-bold text-[16px] text-[var(--label-1)] leading-none tracking-tight">
           Dylan's HQ
         </div>
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--ink-3)] mt-1">
-          Field journal
-        </div>
+        <div className="text-[11px] text-[var(--label-3)] mt-1">Personal command center</div>
       </div>
     </div>
   )
@@ -196,33 +190,34 @@ function Brand({ inline = false }) {
 
 function BrandMark() {
   return (
-    <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
-      <span className="font-display text-[var(--ink-1)] leading-none"
-            style={{ fontWeight: 600, fontSize: '20px', letterSpacing: '-0.04em' }}>
-        D
-      </span>
-      <span className="absolute -bottom-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+    <div className="relative w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0
+                    bg-gradient-to-br from-sys-blue via-sys-indigo to-sys-purple
+                    shadow-glow-blue ring-1 ring-white/20">
+      <span className="text-white font-bold text-[15px] tracking-tight">D</span>
     </div>
   )
 }
 
 function NavButton({ item, active, onClick }) {
+  const Icon = item.icon
   return (
     <button
       onClick={onClick}
-      className={`group relative w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-all
+      className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-all
         ${active
           ? 'nav-active'
-          : 'text-[var(--ink-2)] hover:text-[var(--ink-1)] hover:bg-[var(--paper-2)]'
+          : 'text-[var(--label-2)] hover:bg-[var(--glass-bg-thin)] hover:text-[var(--label-1)]'
         }`}
+      style={{ transition: 'all 240ms cubic-bezier(0.32, 0.72, 0, 1)' }}
       aria-current={active ? 'page' : undefined}
     >
-      <span className={`font-mono text-[10px] tracking-[0.10em] ${
-        active ? 'text-[var(--accent)]' : 'text-[var(--ink-4)]'
-      }`}>
-        {item.number}
-      </span>
-      <span className={active ? 'font-medium' : ''}>{item.label}</span>
+      <Icon
+        size={17}
+        strokeWidth={active ? 2.2 : 1.7}
+        style={{ color: active ? item.tint : 'currentColor' }}
+        className="shrink-0"
+      />
+      <span className="flex-1 text-left">{item.label}</span>
     </button>
   )
 }

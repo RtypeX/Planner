@@ -48,39 +48,38 @@ export default function Modal({ open, onClose, title, eyebrow, children, footer,
   const widths = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' }
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-6 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
-      <div className="fixed inset-0 bg-[var(--ink-1)]/40" onClick={onClose} aria-hidden />
+      {/* Tinted blurred backdrop */}
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-md" onClick={onClose} aria-hidden />
+
       <div
         ref={dialogRef}
         className={`relative w-full ${widths[size] || widths.md} max-h-[92vh] overflow-y-auto
-                    bg-[var(--paper-1)]
-                    border border-[var(--rule-strong)]
-                    shadow-soft-lg
-                    animate-slide-up`}
+                    glass-strong animate-spring-up`}
       >
         <div className="flex items-start justify-between gap-4 px-6 py-5
-                        border-b border-[var(--rule)]
-                        sticky top-0 bg-[var(--paper-1)] z-10">
+                        border-b border-[var(--separator)]
+                        sticky top-0 z-10
+                        bg-[var(--glass-bg-strong)] backdrop-blur-2xl">
           <div className="min-w-0">
             {eyebrow && <div className="page-eyebrow">{eyebrow}</div>}
-            <h3 className="font-display text-lg sm:text-xl text-[var(--ink-1)] truncate mt-1.5"
-                style={{ fontWeight: 500, letterSpacing: '-0.02em' }}>
+            <h3 className="font-bold text-[20px] text-[var(--label-1)] truncate mt-1 tracking-tight">
               {title}
             </h3>
           </div>
           <button className="btn btn-ghost btn-icon -mr-2 -mt-1" onClick={onClose} aria-label="Close">
-            <X size={16} strokeWidth={1.5} />
+            <X size={18} strokeWidth={1.8} />
           </button>
         </div>
         <div className="p-6">{children}</div>
         {footer && (
-          <div className="px-6 py-4 border-t border-[var(--rule)]
+          <div className="px-6 py-4 border-t border-[var(--separator)]
                           flex justify-end gap-2 sticky bottom-0
-                          bg-[var(--paper-1)]">
+                          bg-[var(--glass-bg-strong)] backdrop-blur-2xl">
             {footer}
           </div>
         )}
