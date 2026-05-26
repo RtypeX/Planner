@@ -175,8 +175,8 @@ export default function FinanceModule() {
 
 function EditableBalance({ label, value, icon: Icon, accent, onChange }) {
   const accents = {
-    brand:   'text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-500/10',
-    emerald: 'text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10',
+    brand:   'text-sky-300 bg-sky-500/15',
+    emerald: 'text-emerald-300 bg-emerald-500/15',
   }
   return (
     <div className="card-padded card-hover">

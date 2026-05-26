@@ -12,19 +12,19 @@ import { detectCarrier, trackingUrl, statusTone, shortStatus } from '../../lib/t
 import { useAppData } from '../../lib/AppData'
 
 const STATUS_STYLES = {
-  Ordered:   { label: 'Ordered',   bar: 'bg-slate-400',   pill: 'bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-200 ring-1 ring-slate-200 dark:ring-white/10' },
-  Shipped:   { label: 'Shipped',   bar: 'bg-amber-500',   pill: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/20' },
-  Traded:    { label: 'Traded',    bar: 'bg-violet-500',  pill: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-500/20' },
-  Submitted: { label: 'Submitted', bar: 'bg-blue-500',    pill: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-500/20' },
-  Paid:      { label: 'Paid',      bar: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/20' },
+  Ordered:   { label: 'Ordered',   bar: 'bg-slate-400',   pill: 'bg-[var(--glass-bg)] text-[var(--label-2)] backdrop-blur ring-1 ring-[var(--glass-stroke-2)]' },
+  Shipped:   { label: 'Shipped',   bar: 'bg-amber-500',   pill: 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30' },
+  Traded:    { label: 'Traded',    bar: 'bg-violet-500',  pill: 'bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/30' },
+  Submitted: { label: 'Submitted', bar: 'bg-sky-500',     pill: 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/30' },
+  Paid:      { label: 'Paid',      bar: 'bg-emerald-500', pill: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30' },
 }
 
 const TONE_STYLES = {
-  emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 ring-1 ring-emerald-200/70 dark:ring-emerald-500/20',
-  brand:   'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300 ring-1 ring-brand-200/70 dark:ring-brand-500/20',
-  amber:   'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 ring-1 ring-amber-200/70 dark:ring-amber-500/20',
-  rose:    'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300 ring-1 ring-rose-200/70 dark:ring-rose-500/20',
-  slate:   'bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300 ring-1 ring-slate-200/70 dark:ring-white/10',
+  emerald: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30',
+  brand:   'bg-sys-blue/15 text-sys-blue ring-1 ring-sys-blue/30',
+  amber:   'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30',
+  rose:    'bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30',
+  slate:   'bg-[var(--glass-bg)] text-[var(--label-2)] backdrop-blur ring-1 ring-[var(--glass-stroke-2)]',
 }
 
 export default function CycleList({
@@ -230,11 +230,11 @@ function BulkBar({ count, onClear, onSetStatus, onDelete }) {
             Set status <ChevronDown size={13} />
           </button>
           {statusOpen && (
-            <div className="absolute right-0 top-full mt-1 z-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] shadow-soft-lg overflow-hidden">
+            <div className="absolute right-0 top-full mt-1 z-20 glass-popover overflow-hidden">
               {CYCLE_STATUSES.map((s) => (
                 <button
                   key={s}
-                  className="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                  className="block w-full text-left px-3 py-2 text-sm hover:bg-[var(--glass-bg-thin)]"
                   onClick={() => { onSetStatus(s); setStatusOpen(false) }}
                 >
                   {s}
@@ -261,12 +261,12 @@ function FilterChip({ label, count, active, onClick, tone }) {
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition
         ${active
-          ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-soft'
-          : `${toneCls || 'bg-slate-100 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300'} hover:opacity-80`
+          ? 'bg-sys-blue text-white shadow-glass-sm'
+          : `${toneCls || 'badge'} hover:opacity-90`
         }`}
     >
       {label}
-      <span className={`tabular-nums px-1.5 rounded-full text-[10px] ${active ? 'bg-white/20' : 'bg-white/60 dark:bg-white/[0.08]'}`}>
+      <span className={`tabular-nums px-1.5 rounded-full text-[10px] ${active ? 'bg-white/25' : 'bg-white/10'}`}>
         {count}
       </span>
     </button>
@@ -296,8 +296,8 @@ function CycleCard({
         onClick={onToggleSelect}
         className={`absolute top-3 left-3 w-5 h-5 rounded-md flex items-center justify-center transition
           ${selected
-            ? 'bg-brand-500 ring-2 ring-brand-500'
-            : 'bg-white dark:bg-slate-800 ring-1 ring-slate-300 dark:ring-white/[0.12] hover:ring-brand-400'}`}
+            ? 'bg-sys-blue ring-2 ring-sys-blue'
+            : 'bg-[var(--glass-bg-thin)] backdrop-blur ring-1 ring-[var(--glass-stroke-2)] hover:ring-sys-blue/60'}`}
         aria-label={selected ? 'Deselect cycle' : 'Select cycle'}
       >
         {selected && <Check size={12} className="text-white" />}
@@ -307,7 +307,7 @@ function CycleCard({
         {/* header row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="icon-tile bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 shrink-0">
+            <div className="icon-tile shrink-0">
               <Smartphone size={16} />
             </div>
             <div className="min-w-0">
@@ -339,11 +339,11 @@ function CycleCard({
               {status.label} <ChevronDown size={10} className="opacity-70" />
             </button>
             {statusEditOpen && (
-              <div className="absolute right-0 top-full mt-1 z-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] shadow-soft-lg overflow-hidden min-w-[120px]">
+              <div className="absolute right-0 top-full mt-1 z-20 glass-popover overflow-hidden min-w-[140px]">
                 {CYCLE_STATUSES.map((s) => (
                   <button
                     key={s}
-                    className="block w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                    className="block w-full text-left px-3 py-1.5 text-xs hover:bg-[var(--glass-bg-thin)]"
                     onClick={() => { onSetStatus?.(s); setStatusEditOpen(false) }}
                   >
                     {s}
@@ -406,12 +406,13 @@ function CycleCard({
 
 function NumTile({ label, value, tone = 'slate' }) {
   const tones = {
-    slate: 'bg-slate-50 dark:bg-white/[0.03] text-slate-900 dark:text-white',
-    emerald: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-    rose: 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300',
+    slate:   { bg: 'rgba(255,255,255,0.04)', text: 'var(--label-1)' },
+    emerald: { bg: 'rgba(48,209,88,0.12)',   text: '#30d158' },
+    rose:    { bg: 'rgba(255,69,58,0.12)',   text: '#ff453a' },
   }
+  const t = tones[tone] || tones.slate
   return (
-    <div className={`rounded-lg px-2 py-2.5 ${tones[tone] || tones.slate}`}>
+    <div className="rounded-xl px-2 py-2.5" style={{ background: t.bg, color: t.text }}>
       <div className="text-[10px] uppercase tracking-wider font-semibold opacity-70">{label}</div>
       <div className="text-[15px] font-bold tabular-nums mt-0.5 truncate">{value}</div>
     </div>
@@ -424,9 +425,7 @@ function TrackingRow({ cycle }) {
 
   if (!cycle.trackingNumber) {
     return (
-      <div className="mt-3 rounded-lg border border-dashed border-slate-200 dark:border-white/[0.06]
-                      px-3 py-2.5 text-[12px] text-slate-400 dark:text-slate-500
-                      flex items-center gap-2">
+      <div className="mt-3 glass-empty px-3 py-2.5 text-[12px] flex items-center gap-2">
         <Truck size={13} /> No tracking number
       </div>
     )
@@ -462,9 +461,7 @@ function TrackingRow({ cycle }) {
   }
 
   return (
-    <div className="mt-3 rounded-xl bg-slate-50 dark:bg-white/[0.03]
-                    border border-slate-200/70 dark:border-white/[0.05]
-                    px-3 py-2.5">
+    <div className="mt-3 glass-tile px-3 py-2.5">
       <div className="flex items-center gap-2">
         <Truck size={14} className="text-slate-500 dark:text-slate-400 shrink-0" />
         <div className="min-w-0 flex-1">

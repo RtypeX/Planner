@@ -22,10 +22,10 @@ const empty = () => ({
 })
 
 const TYPE_STYLES = {
-  Run:        'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300 ring-1 ring-brand-200/70 dark:ring-brand-500/20',
-  'Push-ups': 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300 ring-1 ring-violet-200/70 dark:ring-violet-500/20',
-  'Sit-ups':  'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 ring-1 ring-amber-200/70 dark:ring-amber-500/20',
-  Mixed:      'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 ring-1 ring-emerald-200/70 dark:ring-emerald-500/20',
+  Run:        'bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/30',
+  'Push-ups': 'bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/30',
+  'Sit-ups':  'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30',
+  Mixed:      'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30',
 }
 
 export default function WorkoutLog() {
@@ -238,10 +238,10 @@ export default function WorkoutLog() {
 
 function QuickButton({ icon: Icon, label, sub, onClick, accent = 'brand' }) {
   const accents = {
-    brand:   'text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-500/10',
-    violet:  'text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/10',
-    amber:   'text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10',
-    emerald: 'text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10',
+    brand:   'text-sky-300 bg-sky-500/15',
+    violet:  'text-violet-300 bg-violet-500/15',
+    amber:   'text-amber-300 bg-amber-500/15',
+    emerald: 'text-emerald-300 bg-emerald-500/15',
   }
   return (
     <button
@@ -252,8 +252,8 @@ function QuickButton({ icon: Icon, label, sub, onClick, accent = 'brand' }) {
         <Icon size={15} />
       </div>
       <div className="min-w-0">
-        <div className="font-semibold text-sm text-slate-900 dark:text-white">{label}</div>
-        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{sub}</div>
+        <div className="font-semibold text-sm text-[var(--label-1)]">{label}</div>
+        <div className="text-[11px] text-[var(--label-3)] truncate">{sub}</div>
       </div>
     </button>
   )
@@ -261,16 +261,16 @@ function QuickButton({ icon: Icon, label, sub, onClick, accent = 'brand' }) {
 
 function PbTile({ label, value, accent = 'brand' }) {
   const tones = {
-    brand:   'bg-brand-50 dark:bg-brand-500/10',
-    violet:  'bg-violet-50 dark:bg-violet-500/10',
-    amber:   'bg-amber-50 dark:bg-amber-500/10',
+    brand:   'bg-sky-500/12',
+    violet:  'bg-violet-500/12',
+    amber:   'bg-amber-500/12',
   }
   return (
     <div className={`rounded-xl p-3 ${tones[accent] || tones.brand}`}>
-      <div className="text-[10px] uppercase tracking-wider font-bold text-slate-600 dark:text-slate-300 opacity-80">
+      <div className="text-[10px] uppercase tracking-wider font-bold text-[var(--label-3)]">
         {label}
       </div>
-      <div className="text-2xl font-extrabold tabular-nums tracking-tight text-slate-900 dark:text-white mt-0.5">
+      <div className="text-2xl font-extrabold tabular-nums tracking-tight text-[var(--label-1)] mt-0.5">
         {value}
       </div>
     </div>

@@ -17,30 +17,30 @@ import { differenceInCalendarDays, parseISO, isValid } from 'date-fns'
 const CAT_STYLES = {
   Arbitrage: {
     icon: Briefcase,
-    pill: 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300 ring-1 ring-brand-200/70 dark:ring-brand-500/20',
-    dot:  'bg-gradient-to-br from-brand-400 to-brand-600',
+    pill: 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/30',
+    dot:  'bg-gradient-to-br from-sky-400 to-blue-600',
   },
   Fitness: {
     icon: DumbbellIcon,
-    pill: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300 ring-1 ring-violet-200/70 dark:ring-violet-500/20',
+    pill: 'bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/30',
     dot:  'bg-gradient-to-br from-violet-400 to-violet-600',
   },
   Military: {
     icon: Shield,
-    pill: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 ring-1 ring-emerald-200/70 dark:ring-emerald-500/20',
+    pill: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30',
     dot:  'bg-gradient-to-br from-emerald-400 to-emerald-600',
   },
   Life: {
     icon: Sparkles,
-    pill: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 ring-1 ring-amber-200/70 dark:ring-amber-500/20',
+    pill: 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30',
     dot:  'bg-gradient-to-br from-amber-400 to-amber-500',
   },
 }
 
 const STATUS_STYLES = {
-  'Not started': 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300 ring-1 ring-slate-200 dark:ring-white/10',
-  'In progress': 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 ring-1 ring-amber-200/70 dark:ring-amber-500/20',
-  Done:          'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 ring-1 ring-emerald-200/70 dark:ring-emerald-500/20',
+  'Not started': 'bg-[var(--glass-bg)] text-[var(--label-2)] backdrop-blur ring-1 ring-[var(--glass-stroke-2)]',
+  'In progress': 'bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30',
+  Done:          'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30',
 }
 
 const empty = () => ({
@@ -260,10 +260,10 @@ function CategoryChip({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold transition
+      className={`inline-flex items-center px-3 py-1.5 rounded-full text-[12px] font-semibold transition
         ${active
-          ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-soft'
-          : 'bg-slate-100 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300 hover:opacity-80'}`}
+          ? 'bg-sys-blue text-white shadow-glass-sm'
+          : 'badge hover:bg-[var(--glass-bg-strong)]'}`}
     >
       {label}
     </button>

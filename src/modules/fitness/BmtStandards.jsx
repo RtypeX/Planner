@@ -137,7 +137,7 @@ function RunStandard({ current, targetSecs, onChange }) {
   return (
     <div className="card-padded card-hover">
       <div className="flex items-center gap-2 mb-3">
-        <div className="icon-tile bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-300">
+        <div className="icon-tile bg-sky-500/15 text-sky-300">
           <Timer size={16} />
         </div>
         <div>
@@ -146,11 +146,11 @@ function RunStandard({ current, targetSecs, onChange }) {
         </div>
       </div>
       <div className="flex items-baseline gap-2 mb-3">
-        <span className="text-3xl font-extrabold tabular-nums tracking-tight text-slate-900 dark:text-white">
+        <span className="text-3xl font-extrabold tabular-nums tracking-tight text-[var(--label-1)]">
           {current ? secondsToMmss(current) : '—'}
         </span>
         {passing && (
-          <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <span className="badge bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30">
             ✓ Passing
           </span>
         )}
@@ -177,9 +177,9 @@ function RunStandard({ current, targetSecs, onChange }) {
 
 function CountStandard({ icon: Icon, label, unit, current, minPass, goal, onChange, color = 'violet' }) {
   const colorMap = {
-    violet: { tile: 'bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-300', bar: 'from-violet-400 to-violet-600' },
-    amber:  { tile: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300',     bar: 'from-amber-400 to-amber-500' },
-    brand:  { tile: 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-300',     bar: 'from-brand-400 to-brand-600' },
+    violet: { tile: 'bg-violet-500/15 text-violet-300', bar: 'from-violet-400 to-violet-600' },
+    amber:  { tile: 'bg-amber-500/15 text-amber-300',   bar: 'from-amber-400 to-amber-500' },
+    brand:  { tile: 'bg-sky-500/15 text-sky-300',       bar: 'from-sky-400 to-blue-600' },
   }
   const c = colorMap[color] || colorMap.violet
   const pct = Math.max(0, Math.min(100, (Number(current || 0) / goal) * 100))
@@ -197,16 +197,16 @@ function CountStandard({ icon: Icon, label, unit, current, minPass, goal, onChan
         </div>
       </div>
       <div className="flex items-baseline gap-2 mb-3">
-        <span className="text-3xl font-extrabold tabular-nums tracking-tight text-slate-900 dark:text-white">
+        <span className="text-3xl font-extrabold tabular-nums tracking-tight text-[var(--label-1)]">
           {current ?? '—'}
         </span>
         {ace && (
-          <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <span className="badge bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30">
             ✓ Goal hit
           </span>
         )}
         {!ace && passing && (
-          <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <span className="badge bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30">
             ✓ Passing
           </span>
         )}

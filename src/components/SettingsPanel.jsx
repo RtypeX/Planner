@@ -89,26 +89,26 @@ export default function SettingsPanel({ open, onClose }) {
         <div className="space-y-7">
           {/* Theme */}
           <section>
-            <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-700 dark:text-slate-200 mb-3">
+            <h4 className="text-[11px] uppercase tracking-wider font-bold text-[var(--label-2)] mb-3">
               Appearance
             </h4>
-            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-white/[0.04]">
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[var(--glass-bg-thin)] border border-[var(--glass-stroke)]">
               <button
                 onClick={() => setSettings({ ...settings, theme: 'light' })}
-                className={`btn justify-center py-2.5 transition ${
+                className={`btn justify-center py-2.5 transition rounded-lg ${
                   settings.theme === 'light'
-                    ? 'bg-white dark:bg-slate-900 shadow-soft text-slate-900 dark:text-white'
-                    : 'text-slate-600 dark:text-slate-400'
+                    ? 'bg-[var(--glass-bg-strong)] backdrop-blur shadow-glass-sm text-[var(--label-1)]'
+                    : 'text-[var(--label-3)] hover:text-[var(--label-2)]'
                 }`}
               >
                 <Sun size={15} /> Light
               </button>
               <button
                 onClick={() => setSettings({ ...settings, theme: 'dark' })}
-                className={`btn justify-center py-2.5 transition ${
+                className={`btn justify-center py-2.5 transition rounded-lg ${
                   settings.theme === 'dark'
-                    ? 'bg-white dark:bg-slate-900 shadow-soft text-slate-900 dark:text-white'
-                    : 'text-slate-600 dark:text-slate-400'
+                    ? 'bg-[var(--glass-bg-strong)] backdrop-blur shadow-glass-sm text-[var(--label-1)]'
+                    : 'text-[var(--label-3)] hover:text-[var(--label-2)]'
                 }`}
               >
                 <Moon size={15} /> Dark
@@ -136,15 +136,15 @@ export default function SettingsPanel({ open, onClose }) {
               pay for the phone, MobileX is the per-unit fee, and trade-in is the
               gift-card value MobileX gives you per phone.
             </p>
-            <div className="rounded-xl border border-slate-200 dark:border-white/[0.06] overflow-hidden">
-              <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/[0.06]">
+            <div className="rounded-xl border border-[var(--glass-stroke)] overflow-hidden">
+              <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[var(--label-3)] bg-[var(--glass-bg-thin)] border-b border-[var(--glass-stroke)]">
                 <div className="col-span-5 sm:col-span-4">Name</div>
                 <div className="col-span-2 sm:col-span-2 text-right">Cost</div>
                 <div className="col-span-2 sm:col-span-2 text-right">MobileX</div>
                 <div className="col-span-2 sm:col-span-3 text-right">Trade-in</div>
                 <div className="col-span-1" />
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+              <div className="divide-y divide-[var(--separator-thin)]">
                 {phoneModels.map((m) => (
                   <div key={m.id} className="grid grid-cols-12 gap-2 px-3 py-2 items-center">
                     <input

@@ -107,15 +107,15 @@ export default function SheetsImport({ open, onClose }) {
       <div className="space-y-4">
         {/* API key inline if missing */}
         {!apiKey && (
-          <div className="rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-3">
-            <p className="text-xs text-amber-800 dark:text-amber-300 mb-2 font-medium">Gemini API key required</p>
+          <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3">
+            <p className="text-xs text-amber-400 mb-2 font-medium">Gemini API key required</p>
             <input
               type="password"
               placeholder="Paste your Gemini API key"
               className="input text-xs font-mono w-full"
               onChange={(e) => setSettings({ ...settings, geminiApiKey: e.target.value.trim() })}
             />
-            <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1">
+            <p className="text-[11px] text-amber-300/80 mt-1">
               Get one free at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="underline">aistudio.google.com/apikey</a>
             </p>
           </div>
@@ -150,12 +150,12 @@ export default function SheetsImport({ open, onClose }) {
         {/* Preview */}
         {preview && (
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-900 dark:text-white">
+            <p className="text-sm font-medium text-[var(--label-1)]">
               Preview ({preview.length} cycle{preview.length > 1 ? 's' : ''})
             </p>
-            <div className="max-h-[200px] overflow-y-auto rounded-lg border border-slate-200 dark:border-white/[0.06]">
+            <div className="max-h-[200px] overflow-y-auto rounded-xl border border-[var(--glass-stroke)]">
               <table className="w-full text-xs">
-                <thead className="bg-slate-50 dark:bg-white/[0.03] sticky top-0">
+                <thead className="bg-[var(--glass-bg-thin)] sticky top-0 backdrop-blur">
                   <tr>
                     <th className="px-2 py-1.5 text-left font-semibold">Model</th>
                     <th className="px-2 py-1.5 text-right font-semibold">Qty</th>
@@ -164,7 +164,7 @@ export default function SheetsImport({ open, onClose }) {
                     <th className="px-2 py-1.5 text-left font-semibold">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+                <tbody className="divide-y divide-[var(--separator-thin)]">
                   {preview.map((c, i) => (
                     <tr key={i}>
                       <td className="px-2 py-1.5">{c.model}</td>

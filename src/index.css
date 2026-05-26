@@ -563,3 +563,52 @@
   max-height: 100vh;
   box-sizing: border-box;
 }
+
+
+/* ─────────────────────────────────────────────────────────
+   Inline / nested glass surfaces — used inside cards for
+   sub-elements like calc tiles, dropdowns, list items.
+   Designed to live ON TOP of a glass surface, so they're
+   thinner and don't double up the blur.
+   ───────────────────────────────────────────────────────── */
+@layer components {
+  /* For small inline pieces (calc tiles, inline number boxes) */
+  .glass-tile {
+    background: var(--glass-bg-thin);
+    border: 1px solid var(--glass-stroke);
+    border-radius: 12px;
+    color: var(--label-1);
+  }
+
+  /* For dropdowns, popovers, command lists — sits above other glass */
+  .glass-popover {
+    background: var(--glass-bg-strong);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 1px solid var(--glass-stroke-2);
+    border-radius: 14px;
+    box-shadow:
+      0 1px 0 var(--glass-shine) inset,
+      0 0 0 0.5px var(--glass-stroke-2),
+      0 8px 24px rgba(0, 0, 0, 0.18);
+  }
+  .dark .glass-popover {
+    box-shadow:
+      0 1px 0 var(--glass-shine) inset,
+      0 0 0 0.5px var(--glass-stroke-2),
+      0 16px 48px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Dashed empty-state surface */
+  .glass-empty {
+    border: 1px dashed var(--glass-stroke-2);
+    border-radius: 12px;
+    color: var(--label-3);
+  }
+
+  /* Override the LiquidButton default size so it matches our other CTAs.
+     The component's sm/lg/xl/xxl sizes still work if you opt in. */
+  [data-slot="button"] {
+    border-radius: 14px !important;
+  }
+}

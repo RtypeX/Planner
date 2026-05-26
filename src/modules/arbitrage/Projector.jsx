@@ -52,9 +52,8 @@ export default function Projector() {
         sub="Forecast the next 5 cycles based on current cash and reinvestment."
         actions={
           <div className="flex items-center gap-2 text-sm rounded-xl px-3 py-2
-                          bg-emerald-50 dark:bg-emerald-500/10
-                          text-emerald-700 dark:text-emerald-300
-                          ring-1 ring-emerald-200/60 dark:ring-emerald-500/20">
+                          bg-emerald-500/12 text-emerald-300
+                          ring-1 ring-emerald-500/30">
             <Target size={15} />
             <span>
               <strong className="tabular-nums">{cyclesToPC}</strong> cycle{cyclesToPC === 1 ? '' : 's'} to PC goal
@@ -154,13 +153,16 @@ export default function Projector() {
                 {cumProfit.map((r) => (
                   <tr key={r.cycle}>
                     <td>
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-300 font-bold text-xs">
+                      <span
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-lg font-bold text-xs"
+                        style={{ background: 'rgba(10,132,255,0.14)', color: '#0a84ff' }}
+                      >
                         {r.cycle}
                       </span>
                     </td>
                     <td className="tabular-nums font-semibold">{r.phones}</td>
                     <td className="tabular-nums">{fmtCurrency(r.capitalDeployed)}</td>
-                    <td className="tabular-nums text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <td className="tabular-nums font-semibold flex items-center gap-1" style={{ color: '#30d158' }}>
                       <Zap size={11} /> {fmtCurrency(r.expectedProfit)}
                     </td>
                     <td className="tabular-nums">{fmtCurrency(r.cumProfit)}</td>

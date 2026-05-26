@@ -276,11 +276,11 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
             />
           </div>
           {form.trackingStatus && (
-            <div className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] px-3 py-2">
+            <div className="glass-tile px-3 py-2">
               <div className="label !mb-0.5">Live status</div>
-              <div className="font-semibold text-sm text-slate-900 dark:text-white">{form.trackingStatus}</div>
+              <div className="font-semibold text-sm text-[var(--label-1)]">{form.trackingStatus}</div>
               {form.trackingRefreshedAt && (
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="text-[11px] text-[var(--label-3)]">
                   Refreshed {new Date(form.trackingRefreshedAt).toLocaleString()}
                 </div>
               )}
@@ -379,11 +379,10 @@ export default function CycleForm({ open, onClose, onSave, initial }) {
       </FormSection>
 
       {/* ── Live calculation summary ──────────────── */}
-      <div className="mt-6 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/60 dark:to-slate-900/30
-                      border border-slate-200/80 dark:border-white/[0.06] p-4">
+      <div className="mt-6 glass-tile p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Receipt size={14} className="text-slate-500 dark:text-slate-400" />
-          <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">
+          <Receipt size={14} className="text-[var(--label-3)]" />
+          <h4 className="text-[11px] uppercase tracking-wider font-bold text-[var(--label-2)]">
             Summary
           </h4>
         </div>
@@ -405,11 +404,11 @@ function FormSection({ icon: Icon, title, children }) {
   return (
     <section className="mb-6 last:mb-0">
       <div className="flex items-center gap-2 mb-3">
-        {Icon && <Icon size={14} className="text-brand-600 dark:text-brand-400" />}
-        <h4 className="text-[11px] uppercase tracking-wider font-bold text-slate-700 dark:text-slate-200">
+        {Icon && <Icon size={14} className="text-[var(--tint)]" />}
+        <h4 className="text-[11px] uppercase tracking-wider font-bold text-[var(--label-2)]">
           {title}
         </h4>
-        <div className="flex-1 h-px bg-gradient-to-r from-slate-200 dark:from-white/[0.06] to-transparent" />
+        <div className="flex-1 h-px bg-[var(--separator)]" />
       </div>
       {children}
     </section>
@@ -418,12 +417,20 @@ function FormSection({ icon: Icon, title, children }) {
 
 function CalcTile({ label, value, tone = 'slate' }) {
   const tones = {
-    slate:   'bg-white dark:bg-slate-800/60 ring-slate-200/70 dark:ring-white/[0.06] text-slate-900 dark:text-white',
-    emerald: 'bg-emerald-50 dark:bg-emerald-500/10 ring-emerald-200/70 dark:ring-emerald-500/20 text-emerald-700 dark:text-emerald-300',
-    rose:    'bg-rose-50 dark:bg-rose-500/10 ring-rose-200/70 dark:ring-rose-500/20 text-rose-700 dark:text-rose-300',
+    slate:   { bg: 'rgba(255,255,255,0.04)', text: 'var(--label-1)',  ring: 'var(--glass-stroke)' },
+    emerald: { bg: 'rgba(48,209,88,0.12)',   text: '#30d158',         ring: 'rgba(48,209,88,0.30)' },
+    rose:    { bg: 'rgba(255,69,58,0.12)',   text: '#ff453a',         ring: 'rgba(255,69,58,0.30)' },
   }
+  const t = tones[tone] || tones.slate
   return (
-    <div className={`rounded-lg p-2.5 ring-1 ${tones[tone] || tones.slate}`}>
+    <div
+      className="rounded-xl p-2.5"
+      style={{
+        background: t.bg,
+        boxShadow: `inset 0 0 0 1px ${t.ring}`,
+        color: t.text,
+      }}
+    >
       <div className="text-[10px] uppercase tracking-wider font-semibold opacity-70">{label}</div>
       <div className="font-bold tabular-nums mt-0.5 text-base">{value}</div>
     </div>
