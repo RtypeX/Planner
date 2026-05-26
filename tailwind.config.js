@@ -1,11 +1,53 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: { '2xl': '1400px' },
+    },
     extend: {
       colors: {
-        // System colors — modeled after Apple's semantic palette
+        // ─── shadcn semantic tokens ────────────────────
+        // These resolve from CSS variables in index.css so any shadcn
+        // component using `bg-primary`, `text-foreground` etc. works.
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+
+        // ─── App-specific palette (kept from previous design) ───
         sys: {
           blue:    '#0a84ff',
           indigo:  '#5e5ce6',
@@ -19,7 +61,6 @@ export default {
           teal:    '#40c8e0',
           cyan:    '#64d2ff',
         },
-        // App background — deep cool charcoal with a hint of blue
         canvas: {
           900: '#000000',
           800: '#0a0a0f',
@@ -27,23 +68,14 @@ export default {
           600: '#1c1c24',
           500: '#26262e',
         },
-        // Map old brand tokens to system blue so existing colors don't break
         brand: {
-          50:  '#e6f2ff',
-          100: '#bfdcff',
-          200: '#94c4ff',
-          300: '#5fa6ff',
-          400: '#2e8aff',
-          500: '#0a84ff',
-          600: '#0066cc',
-          700: '#004f9e',
-          800: '#003d7a',
-          900: '#002e5c',
-          950: '#001f3d',
+          50:  '#e6f2ff',  100: '#bfdcff', 200: '#94c4ff',
+          300: '#5fa6ff',  400: '#2e8aff', 500: '#0a84ff',
+          600: '#0066cc',  700: '#004f9e', 800: '#003d7a',
+          900: '#002e5c',  950: '#001f3d',
         },
       },
       fontFamily: {
-        // SF Pro stack — falls back to Inter, then system
         sans: [
           '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"',
           'Inter', 'system-ui', 'sans-serif',
@@ -60,12 +92,15 @@ export default {
         tight:    '-0.015em',
       },
       borderRadius: {
-        'xl':  '14px',
+        // shadcn pattern — derive from --radius CSS variable
+        lg:  'var(--radius)',
+        md:  'calc(var(--radius) - 2px)',
+        sm:  'calc(var(--radius) - 4px)',
+        xl:  '14px',
         '2xl': '20px',
         '3xl': '28px',
       },
       boxShadow: {
-        // Glass elevation — outer + inner highlight + inner edge
         'glass-sm': '0 1px 2px rgba(0,0,0,0.20), 0 4px 12px -4px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.08)',
         'glass-md': '0 2px 4px rgba(0,0,0,0.25), 0 12px 32px -8px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.10)',
         'glass-lg': '0 8px 16px rgba(0,0,0,0.30), 0 32px 80px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)',
@@ -76,13 +111,22 @@ export default {
         'press':       'inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 1px rgba(0,0,0,0.20)',
       },
       backgroundImage: {
-        // Vibrancy gradients — iOS-style subtle hue shifts
         'glass-shine': 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 100%)',
         'glass-edge':  'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%)',
         'aurora-blue':   'radial-gradient(800px 400px at 80% 0%, rgba(10,132,255,0.20), transparent 60%), radial-gradient(600px 400px at 0% 100%, rgba(94,92,230,0.16), transparent 60%)',
         'aurora-purple': 'radial-gradient(800px 400px at 80% 0%, rgba(191,90,242,0.20), transparent 60%), radial-gradient(600px 400px at 0% 100%, rgba(255,55,95,0.14), transparent 60%)',
       },
       keyframes: {
+        // shadcn defaults
+        'accordion-down': {
+          from: { height: '0' },
+          to:   { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to:   { height: '0' },
+        },
+        // app keyframes
         'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
         'spring-up': {
           '0%':   { opacity: 0, transform: 'translateY(10px) scale(0.98)' },
@@ -121,6 +165,8 @@ export default {
         },
       },
       animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up':   'accordion-up 0.2s ease-out',
         'fade-in':     'fade-in 240ms cubic-bezier(0.32, 0.72, 0, 1)',
         'spring-up':   'spring-up 480ms cubic-bezier(0.32, 0.72, 0, 1)',
         'spring-down': 'spring-down 480ms cubic-bezier(0.32, 0.72, 0, 1)',
@@ -137,5 +183,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 }

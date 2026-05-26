@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Wallet, DollarSign, Clock, PiggyBank, Plus, Trash2, Target, Sparkles } from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
 import ProgressBar from '../../components/ui/ProgressBar'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import Modal from '../../components/ui/Modal'
 import SectionHeader from '../../components/ui/SectionHeader'
 import FinanceCharts from './FinanceCharts'
@@ -114,9 +115,9 @@ export default function FinanceModule() {
           title="Goals"
           sub="Track progress toward big-ticket items."
           actions={
-            <button className="btn-primary" onClick={() => setAdding(true)}>
-              <Plus size={16} /> Add goal
-            </button>
+            <LiquidButton size="sm" onClick={() => setAdding(true)} className="!h-9 !px-5 text-[14px] font-semibold">
+              <Plus size={14} strokeWidth={2.2} /> Add goal
+            </LiquidButton>
           }
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 stagger">

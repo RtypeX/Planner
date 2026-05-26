@@ -6,6 +6,7 @@ import Modal from '../../components/ui/Modal'
 import EmptyState from '../../components/ui/EmptyState'
 import SectionHeader from '../../components/ui/SectionHeader'
 import ProgressBar from '../../components/ui/ProgressBar'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { useAppData } from '../../lib/AppData'
 import { uid } from '../../lib/storage'
 import {
@@ -72,9 +73,9 @@ export default function PrivacyCards() {
         title="Privacy cards"
         sub={`${usedThisMonth} of ${PRIVACY_MONTHLY_LIMIT} cards used this month`}
         actions={
-          <button className="btn-primary" onClick={() => setEditing(empty())}>
-            <Plus size={16} /> New card
-          </button>
+          <LiquidButton size="sm" onClick={() => setEditing(empty())} className="!h-9 !px-5 text-[14px] font-semibold">
+            <Plus size={14} strokeWidth={2.2} /> New card
+          </LiquidButton>
         }
       />
 
@@ -104,9 +105,9 @@ export default function PrivacyCards() {
             title="No privacy cards tracked"
             description="Add your virtual cards to track uses per card and monthly burn against the 12-card limit."
             action={
-              <button className="btn-primary" onClick={() => setEditing(empty())}>
-                <Plus size={15} /> Add a card
-              </button>
+              <LiquidButton size="sm" onClick={() => setEditing(empty())} className="!h-9 !px-5 text-[14px] font-semibold">
+                <Plus size={14} strokeWidth={2.2} /> Add a card
+              </LiquidButton>
             }
           />
         </div>

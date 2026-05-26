@@ -8,6 +8,7 @@ import { uid } from '../../lib/storage'
 import { WORKOUT_TYPES } from '../../lib/defaults'
 import { fmtDateShort, mmssToSeconds, secondsToMmss, todayISO } from '../../lib/calc'
 import { isPersonalBest, getPersonalBests } from '../../lib/insights'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 
 const empty = () => ({
   id: '',
@@ -100,9 +101,9 @@ export default function WorkoutLog() {
         title="Workout history"
         sub="Every session, sortable by most recent."
         actions={
-          <button className="btn-primary" onClick={() => setEditing(empty())}>
-            <Plus size={16} /> Log workout
-          </button>
+          <LiquidButton size="sm" onClick={() => setEditing(empty())} className="!h-9 !px-5 text-[14px] font-semibold">
+            <Plus size={14} strokeWidth={2.2} /> Log workout
+          </LiquidButton>
         }
       />
 
@@ -165,9 +166,9 @@ export default function WorkoutLog() {
             title="No workouts yet"
             description="Log your first run, push-up set, or sit-up set to start the streak counter and progress charts."
             action={
-              <button className="btn-primary" onClick={() => setEditing(empty())}>
-                <Plus size={15} /> Log workout
-              </button>
+              <LiquidButton size="sm" onClick={() => setEditing(empty())} className="!h-9 !px-5 text-[14px] font-semibold">
+                <Plus size={14} strokeWidth={2.2} /> Log workout
+              </LiquidButton>
             }
           />
         ) : (

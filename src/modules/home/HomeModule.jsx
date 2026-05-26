@@ -6,6 +6,7 @@ import {
 import { format } from 'date-fns'
 import StatCard from '../../components/ui/StatCard'
 import ProgressBar from '../../components/ui/ProgressBar'
+import { LiquidButton } from '../../components/ui/liquid-glass-button'
 import { useAppData } from '../../lib/AppData'
 import { useCountUp } from '../../lib/animation'
 import { uid } from '../../lib/storage'
@@ -75,9 +76,9 @@ export default function HomeModule({ goTo, onOpenAssistant }) {
             <button className="btn btn-secondary" onClick={() => goTo?.('fitness')}>
               <Dumbbell size={14} strokeWidth={1.8} /> Workout
             </button>
-            <button className="btn btn-primary" onClick={() => setEditingCycle({})}>
+            <LiquidButton size="sm" onClick={() => setEditingCycle({})} className="!h-9 !px-5 text-[14px] font-semibold">
               <Plus size={15} strokeWidth={2.2} /> New cycle
-            </button>
+            </LiquidButton>
           </div>
         </div>
 

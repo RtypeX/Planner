@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import StatCard from '../../components/ui/StatCard'
 import ProgressBar from '../../components/ui/ProgressBar'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import CycleForm from './CycleForm'
 import CycleList from './CycleTable'
 import PrivacyCards from './PrivacyCards'
@@ -154,9 +155,9 @@ export default function ArbitrageModule() {
           <button className="btn btn-secondary" onClick={() => setSheetsOpen(true)}>
             <FileSpreadsheet size={13} strokeWidth={1.6} /> Import
           </button>
-          <button className="btn btn-primary" onClick={() => setEditing({})}>
-            <Plus size={14} strokeWidth={2} /> New cycle
-          </button>
+          <LiquidButton size="sm" onClick={() => setEditing({})} className="!h-9 !px-5 text-[14px] font-semibold">
+            <Plus size={14} strokeWidth={2.2} /> New cycle
+          </LiquidButton>
         </div>
       </header>
 

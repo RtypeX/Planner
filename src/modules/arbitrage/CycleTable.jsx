@@ -4,6 +4,8 @@ import {
   ArrowRight, CalendarClock, Plus, Package, Search, X, Copy, Check, ChevronDown,
 } from 'lucide-react'
 import EmptyState from '../../components/ui/EmptyState'
+import { FallingPattern } from '@/components/ui/falling-pattern'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { fmtCurrency, fmtDateShort, expectedPayout, netProfit, totalCost } from '../../lib/calc'
 import { CYCLE_STATUSES } from '../../lib/defaults'
 import { detectCarrier, trackingUrl, statusTone, shortStatus } from '../../lib/tracking'
@@ -66,17 +68,27 @@ export default function CycleList({
 
   if (cycles.length === 0) {
     return (
-      <div className="card">
-        <EmptyState
-          icon={Package}
-          title="No cycles yet"
-          description="Log your first iPhone arbitrage cycle to start tracking costs, payouts, and profit."
-          action={
-            <button className="btn-primary" onClick={onNew}>
-              <Plus size={15} /> New cycle
-            </button>
-          }
+      <div className="card relative overflow-hidden h-[320px]">
+        <FallingPattern
+          className="!absolute !inset-0 !p-0 [mask-image:radial-gradient(ellipse_at_center,transparent,black_85%)]"
+          color="rgba(10,132,255,0.55)"
+          backgroundColor="transparent"
+          duration={120}
+          density={1.4}
+          blurIntensity="0.8em"
         />
+        <div className="relative z-10 h-full flex items-center justify-center">
+          <EmptyState
+            icon={Package}
+            title="No cycles yet"
+            description="Log your first iPhone arbitrage cycle to start tracking costs, payouts, and profit."
+            action={
+              <LiquidButton size="sm" onClick={onNew} className="!h-9 !px-5 text-[14px] font-semibold">
+                <Plus size={15} /> New cycle
+              </LiquidButton>
+            }
+          />
+        </div>
       </div>
     )
   }

@@ -6,6 +6,7 @@ import {
 import Modal from '../../components/ui/Modal'
 import EmptyState from '../../components/ui/EmptyState'
 import SectionHeader from '../../components/ui/SectionHeader'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { useAppData } from '../../lib/AppData'
 import { uid } from '../../lib/storage'
 import { MILESTONE_CATEGORIES, MILESTONE_STATUSES } from '../../lib/defaults'
@@ -129,9 +130,9 @@ export default function Timeline() {
             <button className="btn-secondary" onClick={exportToCalendar} title="Export to calendar (.ics)">
               <Download size={15} /> .ics
             </button>
-            <button className="btn-primary" onClick={() => setEditing(empty())}>
-              <Plus size={16} /> New milestone
-            </button>
+            <LiquidButton size="sm" onClick={() => setEditing(empty())} className="!h-9 !px-5 text-[14px] font-semibold">
+              <Plus size={14} strokeWidth={2.2} /> New milestone
+            </LiquidButton>
           </div>
         }
       />
